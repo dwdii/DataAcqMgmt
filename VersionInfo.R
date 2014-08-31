@@ -1,6 +1,10 @@
 #
-# Creator: Daniel Dittenhafer
-# Created: Aug 29, 2014
+#     Creator: Daniel Dittenhafer
+#
+#     Created: Aug 29, 2014
+#
+# Description: Queries the runtimes of R, RStudio and PostgreSQL and displays 
+#              version information to the console.
 #
 
 # R.version.string returns "R version 3.1.1 (2014-07-10)" for me.
@@ -13,7 +17,7 @@ rstudio::versionInfo()
 require("RPostgreSQL")
 drv <- dbDriver("PostgreSQL")
 con <- dbConnect(drv,user="postgres",password="a",dbname="postgres")
-dbGetInfo(con) # Returns, among other things, $serverVersion = "9.3.5"
+dbGetInfo(con)  # Returns, among other things, $serverVersion = "9.3.5"
 
 # DMwR sales data set
 # -------------------
