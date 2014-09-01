@@ -25,15 +25,36 @@ length(levels(factorVector)) # = 17
 resultVec <- 3 * myFirstVector ^ 2 - 4 * myFirstVector + 1
 resultVec 
 
-# 6. 
+# 6. Implement orgindary least-squares regression in matrix form...
+(X <- matrix(c(1, 1, 1, 1, 1, 1, 1, 1,
+               5, 4, 6, 2, 3, 2, 7, 8,
+               8, 9, 4, 7, 4, 9, 6, 4), ncol = 3))
 
-# 7. 
+(y <- matrix(c(45.2,
+              46.9,
+              31.0,
+              35.3,
+              25.0,
+              43.1,
+              41.0,
+              35.1), ncol = 1))
+
+(B.hat <- solve( t(X) %*% X ) %*% t(X) %*% y  ) # solve takes the inverse
+
+# 7. Create a named list...
+(list7 <- list(MyFirstVector = myFirstVector, 
+               TheFactorVector = factorVector, 
+               ResultVector = resultVec)) # Showing the list after creation
 
 # 8. Create a data frame with four columns...
-charV <- c("Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet", "Blue", "Red", "Yellow")
-factorV <- as.factor(c("Labor", "Capital", "Tax", "Labor", "Capital", "Tax", "Labor", "Capital", "Tax", "Labor"))
+charV <- c("Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet", 
+           "Blue", "Red", "Yellow")
+factorV <- as.factor(c("Labor", "Capital", "Tax", "Labor", "Capital", "Tax", 
+                       "Labor", "Capital", "Tax", "Labor"))
 numV <- c(3, 1, 4, 1, 5, 9, 2, 6, 5, 3)
-dateV <- as.Date(c('2014-01-01', '2014-01-02', '2014-01-03', '2014-01-04', '2014-01-05', '2014-01-06', '2014-01-07', '2014-01-08', '2014-01-09', '2014-01-10'))
+dateV <- as.Date(c('2014-01-01', '2014-01-02', '2014-01-03', '2014-01-04', 
+                   '2014-01-05', '2014-01-06', '2014-01-07', '2014-01-08', 
+                   '2014-01-09', '2014-01-10'))
 
 theDF <- data.frame(charV, factorV, numV, dateV)
 theDF # Show the data frame
