@@ -25,5 +25,17 @@ length(levels(factorVector)) # = 17
 resultVec <- 3 * myFirstVector ^ 2 - 4 * myFirstVector + 1
 resultVec 
 
+# 6. 
 
+# 7. 
 
+# 8. Create a data frame with four columns...
+charV <- c("Red", "Orange", "Yellow", "Green", "Blue", "Indigo", "Violet", "Blue", "Red", "Yellow")
+factorV <- as.factor(c("Labor", "Capital", "Tax", "Labor", "Capital", "Tax", "Labor", "Capital", "Tax", "Labor"))
+numV <- c(3, 1, 4, 1, 5, 9, 2, 6, 5, 3)
+dateV <- as.Date(c('2014-01-01', '2014-01-02', '2014-01-03', '2014-01-04', '2014-01-05', '2014-01-06', '2014-01-07', '2014-01-08', '2014-01-09', '2014-01-10'))
+
+theDF <- data.frame(charV, factorV, numV, dateV)
+theDF # Show the data frame
+
+# 9.
