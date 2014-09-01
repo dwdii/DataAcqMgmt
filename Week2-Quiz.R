@@ -62,5 +62,23 @@ theDF # Show the data frame
 # 9. Illustrate how to add a row with a value from the factor column that 
 #    isn't already in the list of levels.
 newRow <- c("Red", "Interest", 5, "2014-01-11")  # Allocate new row vector
-(levels(theDF$factorV) <- c(levels(theDF$factorV), "Interest"))  # Add new level 
-rbind(theDF, newRow) # Append new row
+levels(theDF$factorV) <- c(levels(theDF$factorV), "Interest")  # Add new level 
+theDF <- rbind(theDF, newRow) # Append new row
+
+
+# 10. Show the code that would read in a CSV file called tempuratures.csv
+#     from the current working directory.
+workingDir <- getwd()
+pathToCsv <- paste(c(workingDir, "/temperatures.csv"), collapse="")
+(tempsDF <- read.table(file = pathToCsv, header = TRUE, sep = ","))
+
+# 11. Show the code that would read in a TSV file called measurements.txt 
+#     from a directory other than the working directory on your local marchine.
+pathToTsv <- "C:/SourceCode/R/DataAcqMgmt/measurements.txt"
+(measureDF <- read.table(file = pathToTsv, header = TRUE, sep = "\t"))
+
+# 12. Show the code that will read in a delimited file with a pipe separator
+#     (the "|" symbol) from a website location.
+pathToHttpPipe <- "http://github.com/dwdii/DataAcqMgmt/blob/master/pipeSeparatedData.txt"
+(measureDF <- read.table(file = pathToHttpPipe, header = TRUE, sep = "|"))
+
