@@ -79,6 +79,13 @@ pathToTsv <- "C:/SourceCode/R/DataAcqMgmt/measurements.txt"
 
 # 12. Show the code that will read in a delimited file with a pipe separator
 #     (the "|" symbol) from a website location.
-pathToHttpPipe <- "http://github.com/dwdii/DataAcqMgmt/blob/master/pipeSeparatedData.txt"
+pathToHttpPipe <- "https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/pipeSeparatedData.txt"
 (measureDF <- read.table(file = pathToHttpPipe, header = TRUE, sep = "|"))
 
+# 13. Write a loop that calculates 12-factorial
+factorial <- 12
+result = 1
+for(i in 1:factorial)
+{
+  result <- result * i
+}
