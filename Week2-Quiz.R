@@ -1,5 +1,5 @@
 #
-#     Creator: Daniel Dittenhafer
+#     Author: Daniel Dittenhafer
 #
 #     Created: Aug 31, 2014
 #
