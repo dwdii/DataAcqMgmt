@@ -85,7 +85,34 @@ pathToHttpPipe <- "https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/pi
 # 13. Write a loop that calculates 12-factorial
 factorial <- 12
 result = 1
-for(i in 1:factorial)
+for(i in 1 : factorial)
 {
   result <- result * i
 }
+
+# 14. Use a loop to calculate the final balance, rounded to the nearest cent...
+# **  Assuming the interest rate is a monthly rate (rather than an annual rate) **
+years = 6
+months= years * 12
+currentBalance = 1500
+rate = 0.0324
+for(m in 1 : months)
+{
+  currentBalance <- currentBalance * (1 + rate)
+}
+round(currentBalance, 2)
+
+# 15. 
+# 3rd, 6th, 9th, ... 18th
+numV2 <- c(2, 7, 1, 8, 2, 8, 1, 8, 2, 8, 4, 5, 9, 0, 4, 5, 2, 3, 5, 3)
+nthItem <- 3
+sumV2 <- 0
+for(i in seq(nthItem, length(numV2), by=nthItem))
+{
+  #print(i)
+  #print(numV2[i])
+  sumV2 <- sumV2 + numV2[i]
+}
+sumV2 # 1 + 8 + 2 + 5 + 4 + 3 = 23
+
+# 16. 
