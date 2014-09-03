@@ -137,3 +137,29 @@ while(i <= 10)
   i <- i + 1
 }
 sum17
+
+# 18. Solve the problem from the previous two exercises without using a loop
+x <- 2
+expVal <- c(1,2,3,4,5,6,7,8,9,10)
+powResult <- x^expVal
+sum18 <- sum(powResult)
+
+# 19. Show how to create a numeric vector that contains the sequence from 
+#     20 to 50 by 5
+numSeq <- seq(20, 50, by=5)
+
+# 20. Show how to create a character vector of length 10 with the same word, 
+#     "example", ten times
+exampleV <- rep("example", 10)
+
+# 21. Show how to take a trio of input numbers a, b, c and implement the 
+#     quadratic equation
+a <- 2
+b <- 9 # b^2 = 81
+c <- 4
+
+(b2 <- sqrt(b^2 - 4 * a * c)) # 81 - 4 * 2 * 4
+
+b2v <- c(b2, -1 * b2) # plus/minus
+
+(x <- (-1 * b  + b2v) / (2 * a))
