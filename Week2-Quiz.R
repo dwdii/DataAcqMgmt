@@ -102,8 +102,9 @@ for(m in 1 : months)
 }
 round(currentBalance, 2)
 
-# 15. 
-# 3rd, 6th, 9th, ... 18th
+# 15. Create a numeric vector of length 20 and then write code to calulate the 
+#     sum of every third element.
+#     3rd, 6th, 9th, ... 18th
 numV2 <- c(2, 7, 1, 8, 2, 8, 1, 8, 2, 8, 4, 5, 9, 0, 4, 5, 2, 3, 5, 3)
 nthItem <- 3
 sumV2 <- 0
@@ -115,4 +116,24 @@ for(i in seq(nthItem, length(numV2), by=nthItem))
 }
 sumV2 # 1 + 8 + 2 + 5 + 4 + 3 = 23
 
-# 16. 
+# 16. Use a for loop to calculate summation x^i where x = 2... 
+sum16 <- 0
+x <- 2
+for(i in 1 : 10)
+{
+  #print(pow2 <- x^i)
+  sum16 <- sum16 + pow2
+}
+sum16
+
+# 17. Use a while look to accomplish the same task as in the previous exercise
+sum17 <- 0
+x <- 2
+i <- 1
+while(i <= 10)
+{
+  pow2 <- x^i
+  sum17 <- sum17 + pow2
+  i <- i + 1
+}
+sum17
