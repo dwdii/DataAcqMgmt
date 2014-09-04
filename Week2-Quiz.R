@@ -122,10 +122,10 @@ sum16 <- 0
 x <- 2
 for(i in 1 : 10)
 {
-  #print(pow2 <- x^i)
+  pow2 <- x^i
   sum16 <- sum16 + pow2
 }
-sum16
+sum16  # Answer: 2046
 
 # 17. Use a while look to accomplish the same task as in the previous exercise
 sum17 <- 0
@@ -137,13 +137,14 @@ while(i <= 10)
   sum17 <- sum17 + pow2
   i <- i + 1
 }
-sum17
+sum17  # Answer: 2046
 
 # 18. Solve the problem from the previous two exercises without using a loop
 x <- 2
 expVal <- c(1,2,3,4,5,6,7,8,9,10)
 powResult <- x^expVal
 sum18 <- sum(powResult)
+sum18  # Answer: 2046
 
 # 19. Show how to create a numeric vector that contains the sequence from 
 #     20 to 50 by 5
