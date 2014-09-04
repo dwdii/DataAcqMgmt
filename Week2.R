@@ -89,6 +89,7 @@ notDivisible <- ifelse(threeBit == 1 & sevenBit == 1 & elevenBit == 1, TRUE, FAL
 # 4. Write R code that takes three input constants f, g, and h and determinues 
 #    whether they form a Pythagorean Triple (such that the square of the largest
 #    is equal to the sum of the squares of the other two constants)
+#    http://stat.ethz.ch/R-manual/R-patched/library/base/html/sort.html
 f <- 8
 g <- 6
 h <- 10
