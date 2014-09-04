@@ -89,6 +89,7 @@ for(i in 1 : factorial)
 {
   result <- result * i
 }
+(result)  # Answer: 479001600
 
 # 14. Use a loop to calculate the final balance, rounded to the nearest cent...
 # **  Assuming the interest rate is a monthly rate (rather than an annual rate) **
@@ -100,7 +101,7 @@ for(m in 1 : months)
 {
   currentBalance <- currentBalance * (1 + rate)
 }
-round(currentBalance, 2)
+round(currentBalance, 2)  # Answer: 14898.65
 
 # 15. Create a numeric vector of length 20 and then write code to calulate the 
 #     sum of every third element.
