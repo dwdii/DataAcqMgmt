@@ -49,11 +49,37 @@ calculate.mean2 <- function(values)
 }
 
 calculate.mean2(c(10,20,30,40, NA))
+# [1] 25
 
 #### 3. ####
 # Write a function that takes two numeric input values and calculates the 
 # greatest common divisor of the two numbers
-calculate.GCD <- function()
+# 
+# Using Euclid's Algoritm
+calculate.GCD <- function(n1, n2)
 {
+  gcd <- NULL
   
+  # Calculate the remainder of division
+  modulus <- n1 %% n2
+  
+  # If zero, then 
+  if(modulus == 0)
+  {
+    # finally found the GCD
+    gcd <- n2
+  } else
+  {
+    # recursive function to keep looking
+    gcd = calculate.GCD(n2, modulus) 
+  }
+  
+   # Return
+  return(gcd)
 }
+
+(calculate.GCD(42,56))
+# [1] 14
+
+#### 4. ####
+# Write a function that implements Euclid's Algorithm
