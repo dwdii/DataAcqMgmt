@@ -287,6 +287,8 @@ strDate15 <- "09-07-2014"
 #### 17. ####
 # Create a sequence of all of the dates from January 1, 2005, to December 31, 2014.
 numeric.days <- seq(0, (365 * 10) + 1)
+
+# Using "origin" overload of as.date to convert integers to date values.
 head(theDates17 <- as.Date(numeric.days, "2005-01-01"))
 # [1] "2005-01-01" "2005-01-02" "2005-01-03" "2005-01-04" "2005-01-05" "2005-01-06"
 
