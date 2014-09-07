@@ -152,3 +152,24 @@ result6[0]
 # Us the data sets from the previous question, but this time merge 
 # them so that the rows from the price-data table all appear, even if 
 # there is no match in the make-model data.
+result7 <- merge(price.data, model.data, by="ModelNumber", all=TRUE)
+result7[0]
+
+#### 8. ####
+# Take y our result from question 7 and subset it so that only the 2010 
+# vehicles are included.
+result8 <- result7[result7$Year == 2010, ]
+(result8 <- result8[!is.na(result8$Year), ])
+
+#### 9. ####
+# Take your result from question 7 and subset it so that only the red cars that
+# cost move than $10,000 are included.
+(result9 <- result7[result7$Price > 10000, ])
+
+#### 10. ####
+# Take your result from question 9 and subset it so that the ModelNumber and 
+# Color columns are removed.
+(result10 <- with(result9, data.frame(ID, Mileage, Price, Make, Model, Year)))
+  
+#### 11. ####
+# Write a function that takes as input a character vector and returns a numeric vector with the numbers of characters
