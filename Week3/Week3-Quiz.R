@@ -55,8 +55,42 @@ calculate.mean2(c(10,20,30,40, NA))
 # Write a function that takes two numeric input values and calculates the 
 # greatest common divisor of the two numbers
 # 
-# Using Euclid's Algoritm
 calculate.GCD <- function(n1, n2)
+{
+  # Create sequences 1 - each number
+  n1.seq <- seq(1,n1)
+  n2.seq <- seq(1,n2)
+  
+  # Determine which greater for later.
+  max <- ifelse( n1 < n2, n1, n2)
+  
+  # Use Modulus to find evenly divisible.
+  n1.mod <- n1 %% n1.seq
+  n2.mod <- n2 %% n2.seq
+  
+  # Convert to boolean
+  n1.bit <- n1.mod == 0
+  n2.bit <- n2.mod == 0
+  
+  # "And" the two vectors using the smaller size
+  common.divisor.bits <- n1.bit[1:max] & n2.bit[1:max]
+  
+  # determine indices of the "true" bits
+  common.divisors <- which(common.divisor.bits)
+  
+  # Which common divisor is greatest?
+  theGcd = max(common.divisors)
+  
+  # Return
+  return(theGcd)
+}
+calculate.GCD(56,42)
+# [1] 14
+
+#### 4. ####
+# Write a function that implements Euclid's Algorithm
+# Using Euclid's Algoritm
+calculate.GcdEuclid <- function(n1, n2)
 {
   gcd <- NULL
   
@@ -74,12 +108,13 @@ calculate.GCD <- function(n1, n2)
     gcd = calculate.GCD(n2, modulus) 
   }
   
-   # Return
+  # Return
   return(gcd)
 }
 
-(calculate.GCD(42,56))
-# [1] 14
+(calculate.GcdEuclid(42,56))
 
-#### 4. ####
-# Write a function that implements Euclid's Algorithm
+#### 5. ####
+# Write a function that takestwo numeric inputs x and y and calculates x^2 * y + 2xy - xy^3
+
+# [1] 14
