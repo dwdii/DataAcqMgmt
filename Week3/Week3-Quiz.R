@@ -185,8 +185,8 @@ num.chars <- function(charVector)
     print("Specified vector is not a character vector.")
   } else
   {
-    # Return
-    return(nchar(charVector))
+    splitChars <- strsplit(charVector, split="")
+    result <- sapply(splitChars, length)
   }  
   
   return(result)
