@@ -113,8 +113,42 @@ calculate.GcdEuclid <- function(n1, n2)
 }
 
 (calculate.GcdEuclid(42,56))
+# [1] 14
 
 #### 5. ####
-# Write a function that takestwo numeric inputs x and y and calculates x^2 * y + 2xy - xy^3
+# Write a function that takes two numeric inputs x and y and calculates x^2 * y + 2xy - xy^3
+calculate.5 <- function(x, y)
+{
+  # R executes in PEMDAS order, so this works nicely.
+  return (x^2 * y + 2 * x * y - x * y^3)
+}
+calculate.5(2,2)
 
-# [1] 14
+#### 6. ####
+# Read in the week-3-price-data.csv and week-3-make-model-data.csv files as 
+# data frames and then merge them by the ModelNumber key. Leave the "all" 
+# parameters as their defaults. 
+#
+# How many observations end up in the result? 
+# Answer: 27
+#
+# Is this what you would have expected? 
+# Answer: I had no expectation per se, but now looking the data more
+#         closely, I see that on of the price data ModelNumber=23120 does
+#         not appear in the model data set. The merge function appears
+#         to be doing an "inner join" (in SQL terms) by default, so the
+#         23120 row gets dropped out.
+path <- file.path("C:/SourceCode/R/DataAcqMgmt/Week3", "week-3-price-data.csv")
+price.data <- read.table(path, header = TRUE, sep=",")
+
+path <- file.path("C:/SourceCode/R/DataAcqMgmt/Week3", "week-3-make-model-data.csv")
+model.data <- read.table(path, header = TRUE, sep=",")
+#(test <- model.data[model.data$Year == 2010, ] )
+
+result6 <- merge(price.data, model.data, by="ModelNumber")
+result6[0]
+
+#### 7. ####
+# Us the data sets from the previous question, but this time merge 
+# them so that the rows from the price-data table all appear, even if 
+# there is no match in the make-model data.
