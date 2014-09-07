@@ -3,7 +3,7 @@
 #
 #     Created: Sept 6, 2014
 #
-# Description: Answers to Week 3 Quiz
+# Description: Answers to IS607 Week 3 Quiz
 #
 
 #### 1. ####
@@ -260,7 +260,7 @@ dateFormat <- function(df)
   return(asDate)
 }
 (theDates <- plyr::ddply(theParts, .variables=c("month", "day", "year"), .fun=dateFormat))
-# month day year            V1
+#    month day year         V1
 # 1      1  30 1975 1975-01-30
 # 2      2  28 1982 1982-02-28
 # 3      3  26 1991 1991-03-26
