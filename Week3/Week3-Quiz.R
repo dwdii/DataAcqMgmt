@@ -173,3 +173,64 @@ result8 <- result7[result7$Year == 2010, ]
   
 #### 11. ####
 # Write a function that takes as input a character vector and returns a numeric vector with the numbers of characters
+# in each of the elements in the original vector
+num.chars <- function(charVector)
+{
+  # Local Vars
+  result <- NULL
+  
+  # check to make sure the input vector is actually a character vector.
+  if(length(charVector) == 0 || !is.character(charVector[0]))
+  {
+    print("Specified vector is not a character vector.")
+  } else
+  {
+    # Return
+    return(nchar(charVector))
+  }  
+  
+  return(result)
+}
+test1 <- c("one", "two", "three")
+(res <- num.chars(test1)) # [1] 3 3 5
+
+test2 <- c(1, 2, NA)
+(res <- num.chars(test2)) # [1] "Specified vector is not a character vector."
+
+#### 12. ####
+# Write a function that takes two character vectors of equal length and 
+# concatenates them element by element with a space as the separator. Have the 
+# function die gracefully if the vectors are _not_ the same length.
+concatenate <- function(charV1, charV2)
+{
+  # Local Vars
+  l1 <- length(charV1)
+  l2 <- length(charV2)
+  result <- NULL
+  
+  if(l1 != l2)
+  {
+    print ("The input vectors must be of each length")
+  } else
+  {
+    result <- mapply(paste, charV1, charV2, USE.NAMES=FALSE)
+  }
+  
+  # Return
+  return (result)
+}
+c1 <- c("one", "three", "five", "seven")
+c2 <- c("two", "four", "six", "eight")
+concatenate(c1, c2)
+# [1] "one two"     "three four"  "five six"    "seven eight"
+
+#### 13. ####
+# Write a function that takes a character vector and returns the substring of 
+# three characters that begins with the first vowel in the string. Have the 
+# function handle gracefully substrings where this isn't possible.
+fn13 <- function(charVector)
+{
+  #result <- lapply(lambda s : strsub(), charVector)
+}
+cv13 <- c("alpha", "beta", "gamma")
+(fn13(cv13))
