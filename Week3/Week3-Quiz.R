@@ -146,17 +146,17 @@ model.data <- read.table(path, header = TRUE, sep=",")
 #(test <- model.data[model.data$Year == 2010, ] )
 
 result6 <- merge(price.data, model.data, by="ModelNumber")
-result6[0]
+dim(result6) # [1] 27  8
 
 #### 7. ####
-# Us the data sets from the previous question, but this time merge 
+# Use the data sets from the previous question, but this time merge 
 # them so that the rows from the price-data table all appear, even if 
 # there is no match in the make-model data.
 result7 <- merge(price.data, model.data, by="ModelNumber", all=TRUE)
-result7[0]
+dim(result7) # [1] 28  8
 
 #### 8. ####
-# Take y our result from question 7 and subset it so that only the 2010 
+# Take your result from question 7 and subset it so that only the 2010 
 # vehicles are included.
 result8 <- result7[result7$Year == 2010, ]
 (result8 <- result8[!is.na(result8$Year), ])
@@ -230,7 +230,65 @@ concatenate(c1, c2)
 # function handle gracefully substrings where this isn't possible.
 fn13 <- function(charVector)
 {
-  #result <- lapply(lambda s : strsub(), charVector)
+  # Locate the index of first vowel
+  ndxVowel <- stringr::str_locate(charVector, pattern="[aeiou]")
+  
+  # Extract the vowel + 2 chars for total of three chars
+  threeChars = stringr::str_sub(charVector, ndxVowel[,1], ndxVowel[,1] + 2)
+  
+  # Return
+  return (threeChars)
 }
 cv13 <- c("alpha", "beta", "gamma")
 (fn13(cv13))
+[1] "alp" "eta" "amm"
+
+#### 14. ####
+# Suppose you have a data frame where one column gives the month (in numeric 
+# format), the next gives the day, and the third column gives the year. Use 
+# R to create such a data frame (by hand is fine) and then add a fourth column
+# with the date in date format.
+month <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+day <- c(30,28,26,25,22,30,19,2,4,2,6,7)
+year <- c(1975,1982,1991,1993,2001,1995,1999,2003,2008,2011,2013,2005)
+(theParts <- data.frame(month, day, year))
+dateFormat <- function(df)
+{
+  strDate <- sprintf("%d-%d-%d", df$year, df$month, df$day)
+  asDate <- as.Date(strDate, format="%Y-%m-%d")
+  
+  return(asDate)
+}
+(theDates <- plyr::ddply(theParts, .variables=c("month", "day", "year"), .fun=dateFormat))
+# month day year            V1
+# 1      1  30 1975 1975-01-30
+# 2      2  28 1982 1982-02-28
+# 3      3  26 1991 1991-03-26
+# 4      4  25 1993 1993-04-25
+# 5      5  22 2001 2001-05-22
+# 6      6  30 1995 1995-06-30
+# 7      7  19 1999 1999-07-19
+# 8      8   2 2003 2003-08-02
+# 9      9   4 2008 2008-09-04
+# 10    10   2 2011 2011-10-02
+# 11    11   6 2013 2013-11-06
+# 12    12   7 2005 2005-12-07
+
+#### 15. ####
+# Illustrate the code necessary to take a string of MM-DD-YYYY format and convert it to a date.
+strDate15 <- "09-07-2014"
+(theDate15 <- as.Date(strDate15, "%m-%d-%Y"))
+# [1] "2014-09-07"
+
+#### 16. ####
+# Illustrate the code necessary to take a date and extract the month of the date
+(theMonth16 <- format(Sys.Date(), "%m"))
+
+#### 17. ####
+# Create a sequence of all of the dates from January 1, 2005, to December 31, 2014.
+numeric.days <- seq(0, (365 * 10) + 1)
+head(theDates17 <- as.Date(numeric.days, "2005-01-01"))
+# [1] "2005-01-01" "2005-01-02" "2005-01-03" "2005-01-04" "2005-01-05" "2005-01-06"
+
+tail(theDates17)
+# [1] "2014-12-26" "2014-12-27" "2014-12-28" "2014-12-29" "2014-12-30" "2014-12-31"
