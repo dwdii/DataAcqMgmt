@@ -197,6 +197,9 @@ test1 <- c("one", "two", "three")
 test2 <- c(1, 2, NA)
 (res <- num.chars(test2)) # [1] "Specified vector is not a character vector."
 
+test3 <- c("John", "Andrew", NA)
+(res <- num.chars(test3)) # [1] 4 6 1
+
 #### 12. ####
 # Write a function that takes two character vectors of equal length and 
 # concatenates them element by element with a space as the separator. Have the 
