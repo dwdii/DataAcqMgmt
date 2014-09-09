@@ -8,30 +8,28 @@
 
 #### 1. ####
 # Write a function that takes a vector as input and returns the number of 
-# missing values in the vector. * assuming a numeric vector *
-num.missing <- function(numVector)
+# missing values in the vector. IE - Count # of NAs
+num.missing <- function(v)
 {
   # Local Vars
   result <- NULL
   
   # Validate param
-  if(!is.numeric(numVector))
+  if(!is.vector(v))
   {
-    print("The input vector must be numeric.")
+    stop("The input parameter must be vector.")
   } else
   {
-    sortedV <- sort(numVector)
-    expected <- seq(min(sortedV), max(sortedV))
-    missing <- length(expected) - length(sortedV)
-    result <- missing
+    missing <- is.na(v)
+    result <- sum(missing)
   }
 
   # Return
   return(result)
 }
-t1 <- c(12,10,11,14,13,20)
+t1 <- c(12,10,11,NA,13,20,NA)
 (num.missing(t1))
-# [1] 5
+# [1] 2
 
 #### 2. ####
 # Write a function that takes a data frame as input and returns a named vector 
@@ -44,15 +42,21 @@ dnum.missing <- function(df)
   result <- NULL
   
   # Apply our num.missing function across the input data.frame
-  result <- sapply(df, num.missing)
+  result <- lapply(df, num.missing)
   
   # Return 
   return(result)
 }
-t2 <- data.frame(first=c(12,10,11,14,13,20), second=c(21,22,4,5,8,7))
+t2 <- data.frame(first=c(12,10,11,14,13,20, NA), second=c(21,22,4,5,8,7, NA), third=c(NA,NA,1,NA,NA,NA,NA))
 (r2 <- dnum.missing(t2))
-#  first second 
-#      5     13 
+# $first
+# [1] 1
+# 
+# $second
+# [1] 1
+# 
+# $third
+# [1] 6
 
 #### 3. ####
 # Write a function that takes a numeric vector as input and uses it to determine
@@ -64,14 +68,14 @@ t2 <- data.frame(first=c(12,10,11,14,13,20), second=c(21,22,4,5,8,7))
 get.stats <- function(numVector)
 {
   # Local Vars
-  vecLength <- length(numVector)
   result <- list(min=NA, max=NA, sum=NA, mean=NA, median=NA, firstQ=NA, thirdQ=NA, stdev=NA, missing=NA)
-  
   sorted <- sort(numVector)
+  vecLength <- length(sorted)
   
+  # Start populating the output
   result$min <- sorted[1]
-  result$max <- sorted[length(sorted)]
-  result$sum <- sum(numVector)
+  result$max <- sorted[vecLength]
+  result$sum <- sum(sorted)
   
   # Mean
   if(0 < vecLength)
@@ -144,12 +148,12 @@ get.stats <- function(numVector)
   result$stdev <- sqrt(variance)
   
   # Num of missing
-  result$missing <- num.missing(sorted)
+  result$missing <- num.missing(numVector)
   
   # Return
   return(result)
 }
-t3 <- c(12,10,11,14,13,20)
+t3 <- c(12,10,11,14,13,20, NA)
 (r3 <- get.stats(t3))
 # $min
 # [1] 10
@@ -222,3 +226,8 @@ fn4 <- function(v)
 }
 t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e","m","d","d"), levels=c("a","b","c","d", "e","f", "g", "m"))
 (fn4(t4))
+
+#### 5. ####
+# Write a function that takes a logical vector and determines the number of 
+# true values, the number of false values, the proportion of true values, and 
+# the number of missing values.
