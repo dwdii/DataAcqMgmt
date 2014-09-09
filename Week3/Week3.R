@@ -68,7 +68,6 @@ get.stats <- function(numVector)
   result <- list(min=NA, max=NA, sum=NA, mean=NA, median=NA, firstQ=NA, thirdQ=NA, stdev=NA, missing=NA)
   
   sorted <- sort(numVector)
-  print(sorted)
   
   result$min <- sorted[1]
   result$max <- sorted[length(sorted)]
@@ -81,33 +80,52 @@ get.stats <- function(numVector)
   }
   
   # Median
-  mid <- vecLength / 2
-  print(mid)
-  if(vecLength %% 2 == 0)
+  myMedian <- function(v)
   {
-    
-    ndx1 <- mid
-    ndx2 <- mid + 1
-    result$median <- (sorted[ndx1] + sorted[ndx2]) / 2
-  } else
-  {
-    ndx <- round(mid, 0) 
-    result$median <- sorted[ndx]
-  }
-  
-  # Quartiles
-  quartile <- function(m, v)
-  {
-    ndx <- (m * length(v)) / 4
-    if(ndx - trunc(ndx) == 0)
+    medres <- NA
+    l <- length(v)
+    mid <- l / 2
+    if(l %% 2 == 0)
     {
-      q <- (v[ndx] + v[ndx + 1]) / 2
       
+      ndx1 <- mid
+      ndx2 <- mid + 1
+      medres <- (v[ndx1] + v[ndx2]) / 2
     } else
     {
-      ndx <- ceiling(ndx)
-      q <- v[ndx] 
-    }   
+      ndx <- round(mid, 0) 
+      medres <- v[ndx]
+    }
+    
+    return (medres)
+  }
+  result$median <- myMedian(sorted)
+  
+  # Quartiles
+  # Using "Inclusive" Method 1 from: http://www.amstat.org/publications/jse/v14n3/langford.html
+  quartile <- function(m, v)
+  {
+    odd <- (length(v) %% 2) != 0
+    half <- length(v) / 2
+    if(odd)
+    {
+      half <- ceiling(half)
+    }
+    
+    if(m == 1)
+    {
+      qset <- v[1:half]
+      
+    } else if (m == 3)
+    {
+      if(!odd)
+      {
+        half <- half + 1
+      }
+      qset <- v[half : length(v)]
+    }
+    
+    q <- myMedian(qset)
     
     return(q)
   }
@@ -118,8 +136,83 @@ get.stats <- function(numVector)
   # Third Q
   result$thirdQ <- quartile(3, sorted)
   
+  # Standard Deviation (of Sample)
+  diffMean <- sorted - result$mean
+  diffMeanSqr <- diffMean ^ 2
+  sumDiffMeanSqr <- sum(diffMeanSqr)
+  variance <- sumDiffMeanSqr / (vecLength - 1)
+  result$stdev <- sqrt(variance)
+  
+  # Num of missing
+  result$missing <- num.missing(sorted)
+  
   # Return
   return(result)
 }
-t3 <- c(12,10,11,14,13,20,23)
+t3 <- c(12,10,11,14,13,20)
 (r3 <- get.stats(t3))
+# $min
+# [1] 10
+# 
+# $max
+# [1] 20
+# 
+# $sum
+# [1] 80
+# 
+# $mean
+# [1] 13.33333
+# 
+# $median
+# [1] 12.5
+# 
+# $firstQ
+# [1] 11
+# 
+# $thirdQ
+# [1] 14
+# 
+# $stdev
+# [1] 3.559026
+# 
+# $missing
+# [1] 5
+
+#### 4. ####
+# Write a function that takes a character or factor vector and determines the 
+# number of distinct elements in the vector, the most commonly occuring 
+# element, the number of times the most commonly occuring element occurs, 
+# and the number of missing values. Be sure to handle ties gracefully. Have the
+# function return a named list with the desired information in a logical order.
+fn4 <- function(v)
+{
+  result <- list(numDistinct=NA, mostCommon=NA, numOfMostCommon=NA, missing=NA)
+  if(!is.character(v) && !is.factor(v))
+  {
+    stop("Input vector v must be either a character or factor vector.")
+  } else
+  {
+    if(is.factor(v))
+    {
+      asFact <- v
+    } else
+    {
+      asFact <- as.factor(v)
+    }
+    
+    print(levels(asFact))
+    
+    # NUmber of Distinct Elements
+    result$numDistinct = length(levels(asFact))
+    
+    # Most Common
+    theCounts <- plyr::count(asFact)
+    print(sortedCounts <- plyr::arrange(theCounts, freq, decreasing=TRUE))
+    result$mostCommon = as.character(sortedCounts[sortedCounts$freq == max(sortedCounts$freq),1])
+    result$numOfMostCommon = sortedCounts[1,2]
+  }
+  
+  return(result)
+}
+t4 <- c("a","b","c","d", "a", "a", "d", "a", "e","m","d","d")
+(fn4(t4))
