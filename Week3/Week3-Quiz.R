@@ -213,7 +213,7 @@ concatenate <- function(charV1, charV2)
   
   if(l1 != l2)
   {
-    print ("The input vectors must be of each length")
+    print ("The input vectors must be of equal length")
   } else
   {
     result <- mapply(paste, charV1, charV2, USE.NAMES=FALSE)
