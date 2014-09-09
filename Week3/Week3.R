@@ -200,19 +200,25 @@ fn4 <- function(v)
       asFact <- as.factor(v)
     }
     
-    print(levels(asFact))
+    theLevels <- data.frame(x=levels(asFact))
     
     # NUmber of Distinct Elements
     result$numDistinct = length(levels(asFact))
     
     # Most Common
     theCounts <- plyr::count(asFact)
-    print(sortedCounts <- plyr::arrange(theCounts, freq, decreasing=TRUE))
+    fullCounts <- merge(theCounts, theLevels, by="x", all=TRUE)
+    sortedCounts <- plyr::arrange(theCounts, freq, decreasing=TRUE)
     result$mostCommon = as.character(sortedCounts[sortedCounts$freq == max(sortedCounts$freq),1])
     result$numOfMostCommon = sortedCounts[1,2]
+    
+    # How to determine missing values from a character or factor vector?
+    # here we use the differece between full list (includes all levels)
+    # and the sorted counts list which doesn't have the NAs
+    result$missing = length(fullCounts$x) - length(sortedCounts$x)
   }
   
   return(result)
 }
-t4 <- c("a","b","c","d", "a", "a", "d", "a", "e","m","d","d")
+t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e","m","d","d"), levels=c("a","b","c","d", "e","f", "g", "m"))
 (fn4(t4))
