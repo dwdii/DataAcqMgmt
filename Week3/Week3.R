@@ -53,3 +53,73 @@ t2 <- data.frame(first=c(12,10,11,14,13,20), second=c(21,22,4,5,8,7))
 (r2 <- dnum.missing(t2))
 #  first second 
 #      5     13 
+
+#### 3. ####
+# Write a function that takes a numeric vector as input and uses it to determine
+# the minimum, the maximum, the mean, the median, the first quartile, the third 
+# quartile, the standard deviation of the vector. and the number of missing values. 
+# Do not use any built in functions to do this. Return a named list with the eight
+# desired values in an order you deem best. You may if you like use the function
+# you wrote for question 1.
+get.stats <- function(numVector)
+{
+  # Local Vars
+  vecLength <- length(numVector)
+  result <- list(min=NA, max=NA, sum=NA, mean=NA, median=NA, firstQ=NA, thirdQ=NA, stdev=NA, missing=NA)
+  
+  sorted <- sort(numVector)
+  print(sorted)
+  
+  result$min <- sorted[1]
+  result$max <- sorted[length(sorted)]
+  result$sum <- sum(numVector)
+  
+  # Mean
+  if(0 < vecLength)
+  {
+    result$mean <- result$sum / vecLength
+  }
+  
+  # Median
+  mid <- vecLength / 2
+  print(mid)
+  if(vecLength %% 2 == 0)
+  {
+    
+    ndx1 <- mid
+    ndx2 <- mid + 1
+    result$median <- (sorted[ndx1] + sorted[ndx2]) / 2
+  } else
+  {
+    ndx <- round(mid, 0) 
+    result$median <- sorted[ndx]
+  }
+  
+  # Quartiles
+  quartile <- function(m, v)
+  {
+    ndx <- (m * length(v)) / 4
+    if(ndx - trunc(ndx) == 0)
+    {
+      q <- (v[ndx] + v[ndx + 1]) / 2
+      
+    } else
+    {
+      ndx <- ceiling(ndx)
+      q <- v[ndx] 
+    }   
+    
+    return(q)
+  }
+  
+  # First Q
+  result$firstQ <- quartile(1, sorted)
+  
+  # Third Q
+  result$thirdQ <- quartile(3, sorted)
+  
+  # Return
+  return(result)
+}
+t3 <- c(12,10,11,14,13,20,23)
+(r3 <- get.stats(t3))
