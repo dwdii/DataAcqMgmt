@@ -226,9 +226,31 @@ fn4 <- function(v)
 }
 t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e",NA,"d"), levels=c("a","b","c","d", "e","f", "g", "m"))
 (fn4(t4))
+# $numDistinct
+# [1] 8
+# 
+# $mostCommon
+# [1] "a"
+# 
+# $numOfMostCommon
+# [1] 4
+# 
+# $missing
+# [1] 1
 
 t4.2 <- c("a","b","c","d", "a", "a", "d", "a", NA,"m","d","d")
 (fn4(t4.2))
+# $numDistinct
+# [1] 5
+# 
+# $mostCommon
+# [1] "a" "d"
+# 
+# $numOfMostCommon
+# [1] 4
+# 
+# $missing
+# [1] 1
 
 #### 5. ####
 # Write a function that takes a logical vector and determines the number of 
@@ -257,6 +279,29 @@ fn5 <- function(logicalV)
 }
 t5 <- c(TRUE, NA, FALSE, TRUE, FALSE, TRUE)
 (fn5(t5))
+# $numTrue
+# [1] 3
+# 
+# $numFalse
+# [1] 2
+# 
+# $ratioTrue
+# [1] 0.6
+# 
+# $missing
+# [1] 1
+
 
 t5.2 <- c()
 (fn5(t5.2))
+# $numTrue
+# [1] NA
+# 
+# $numFalse
+# [1] NA
+# 
+# $ratioTrue
+# [1] NA
+# 
+# $missing
+# [1] NA
