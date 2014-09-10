@@ -219,15 +219,44 @@ fn4 <- function(v)
     # How to determine missing values from a character or factor vector?
     # here we use the differece between full list (includes all levels)
     # and the sorted counts list which doesn't have the NAs
-    result$missing = length(fullCounts$x) - length(sortedCounts$x)
+    result$missing = num.missing(as.character(v))
   }
   
   return(result)
 }
-t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e","m","d","d"), levels=c("a","b","c","d", "e","f", "g", "m"))
+t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e",NA,"d"), levels=c("a","b","c","d", "e","f", "g", "m"))
 (fn4(t4))
+
+t4.2 <- c("a","b","c","d", "a", "a", "d", "a", NA,"m","d","d")
+(fn4(t4.2))
 
 #### 5. ####
 # Write a function that takes a logical vector and determines the number of 
 # true values, the number of false values, the proportion of true values, and 
-# the number of missing values.
+# the number of missing values. Have the function return a named list with the
+# desired information in a logical order.
+fn5 <- function(logicalV)
+{
+  # Local Vars
+  result <- list(numTrue=NA, numFalse=NA, ratioTrue=NA, missing=NA)
+  
+  if(0 < length(logicalV))
+  {
+    sorted <- sort(logicalV)
+    vLength <- length(sorted)
+    
+    result$numTrue = sum(sorted)
+    result$numFalse = vLength - result$numTrue
+    result$ratioTrue = result$numTrue / vLength
+    
+    # Benefit from the fact that NAs drop out during sort.
+    result$missing = length(logicalV) - vLength 
+  }
+  
+  return (result)
+}
+t5 <- c(TRUE, NA, FALSE, TRUE, FALSE, TRUE)
+(fn5(t5))
+
+t5.2 <- c()
+(fn5(t5.2))
