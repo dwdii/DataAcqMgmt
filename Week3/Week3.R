@@ -65,7 +65,7 @@ t2 <- data.frame(first=c(12,10,11,14,13,20, NA), second=c(21,22,4,5,8,7, NA), th
 # Do not use any built in functions to do this. Return a named list with the eight
 # desired values in an order you deem best. You may if you like use the function
 # you wrote for question 1.
-get.stats <- function(numVector)
+get.numericStats <- function(numVector)
 {
   # Local Vars
   result <- list(min=NA, max=NA, sum=NA, mean=NA, median=NA, firstQ=NA, thirdQ=NA, stdev=NA, missing=NA)
@@ -154,7 +154,7 @@ get.stats <- function(numVector)
   return(result)
 }
 t3 <- c(12,10,11,14,13,20, NA)
-(r3 <- get.stats(t3))
+(r3 <- get.numericStats(t3))
 # $min
 # [1] 10
 # 
@@ -188,7 +188,7 @@ t3 <- c(12,10,11,14,13,20, NA)
 # element, the number of times the most commonly occuring element occurs, 
 # and the number of missing values. Be sure to handle ties gracefully. Have the
 # function return a named list with the desired information in a logical order.
-fn4 <- function(v)
+get.factorInfo <- function(v)
 {
   result <- list(numDistinct=NA, mostCommon=NA, numOfMostCommon=NA, missing=NA)
   if(!is.character(v) && !is.factor(v))
@@ -225,7 +225,7 @@ fn4 <- function(v)
   return(result)
 }
 t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e",NA,"d"), levels=c("a","b","c","d", "e","f", "g", "m"))
-(fn4(t4))
+(get.factorInfo(t4))
 # $numDistinct
 # [1] 8
 # 
@@ -239,7 +239,7 @@ t4 <- factor(c("a","b","c","d", "a", "a", "d", "a", "e",NA,"d"), levels=c("a","b
 # [1] 1
 
 t4.2 <- c("a","b","c","d", "a", "a", "d", "a", NA,"m","d","d")
-(fn4(t4.2))
+(get.factorInfo(t4.2))
 # $numDistinct
 # [1] 5
 # 
@@ -257,7 +257,7 @@ t4.2 <- c("a","b","c","d", "a", "a", "d", "a", NA,"m","d","d")
 # true values, the number of false values, the proportion of true values, and 
 # the number of missing values. Have the function return a named list with the
 # desired information in a logical order.
-fn5 <- function(logicalV)
+get.logicalInfo <- function(logicalV)
 {
   # Local Vars
   result <- list(numTrue=NA, numFalse=NA, ratioTrue=NA, missing=NA)
@@ -278,7 +278,7 @@ fn5 <- function(logicalV)
   return (result)
 }
 t5 <- c(TRUE, NA, FALSE, TRUE, FALSE, TRUE)
-(fn5(t5))
+(get.logicalInfo(t5))
 # $numTrue
 # [1] 3
 # 
@@ -293,7 +293,7 @@ t5 <- c(TRUE, NA, FALSE, TRUE, FALSE, TRUE)
 
 
 t5.2 <- c()
-(fn5(t5.2))
+(get.logicalInfo(t5))
 # $numTrue
 # [1] NA
 # 
@@ -305,3 +305,113 @@ t5.2 <- c()
 # 
 # $missing
 # [1] NA
+
+#### 6.####
+# Write a function that takes as its input a data frame and returns a summary 
+# of its columns using the functions you write for questions 3-5. You may 
+# assume that all columns will be of the three types in those questions. You 
+# are expected to use the functions you have written in the previous questions,
+# so you do no have to write them again by scratch. Return the desired 
+# information in a format that you deem best. One suggestion would be a named
+# list of lists, but I leave it your judgement.
+get.df.info <- function(df)
+{
+  result <- vector("list", length(df))
+  names(result) <- names(df)
+  
+  for(i in names(df))
+  {
+    if(is.factor(df[,i]))
+    {
+      result[[i]] <- get.factorInfo(df[,i])
+    } else if(is.numeric(df[,i]))
+    { 
+      result[[i]] <- get.numericStats(df[,i])
+    }
+    else if(is.logical(df[,i]))
+    {
+      result[[i]] <- get.logicalInfo(df[,i])
+    }
+    else if(is.character(df[,i]))
+    {
+      result[[i]] <- get.factorInfo(df[,i])
+    }
+  }
+  
+  return(result)
+}
+b1 <- c(TRUE, FALSE, NA)
+c1 <- c("a", "b", "c")
+f1 <- factor(c("z", "y", "x"))
+n1 <- c(10, 20, 30)
+df6 <- data.frame(b1=b1, f1=f1, c1=c1, n1=n1, stringsAsFactors=FALSE)
+(get.df.info(df6))
+# $b1
+# $b1$numTrue
+# [1] 1
+# 
+# $b1$numFalse
+# [1] 1
+# 
+# $b1$ratioTrue
+# [1] 0.5
+# 
+# $b1$missing
+# [1] 1
+# 
+# 
+# $f1
+# $f1$numDistinct
+# [1] 3
+# 
+# $f1$mostCommon
+# [1] "x" "y" "z"
+# 
+# $f1$numOfMostCommon
+# [1] 1
+# 
+# $f1$missing
+# [1] 0
+# 
+# 
+# $c1
+# $c1$numDistinct
+# [1] 3
+# 
+# $c1$mostCommon
+# [1] "a" "b" "c"
+# 
+# $c1$numOfMostCommon
+# [1] 1
+# 
+# $c1$missing
+# [1] 0
+# 
+# 
+# $n1
+# $n1$min
+# [1] 10
+# 
+# $n1$max
+# [1] 30
+# 
+# $n1$sum
+# [1] 60
+# 
+# $n1$mean
+# [1] 20
+# 
+# $n1$median
+# [1] 20
+# 
+# $n1$firstQ
+# [1] 15
+# 
+# $n1$thirdQ
+# [1] 25
+# 
+# $n1$stdev
+# [1] 10
+# 
+# $n1$missing
+# [1] 0
