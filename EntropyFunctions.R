@@ -15,15 +15,12 @@ entropy <- function(d)
   # Eliminate missing values
   noNAs <- subset(d, !is.na(d))
   
-  # Convert to factor to give us categorical concept  
-  asFactor <- as.factor(noNAs)
-  
   # How many of each?
-  theCounts <- plyr::count(asFactor)
+  theCounts <- plyr::count(noNAs)
   
   fn.p.log2.p <- function(r)
   {
-    p.i <- (r / length(asFactor))
+    p.i <- (r / length(noNAs))
     return (p.i * log2(p.i))
   }
   
@@ -40,15 +37,32 @@ infogain <- function(d, a)
 {
   # get the unpartitioned E
   rawE <- entropy(d)
+
+  # Count all 
+  print(a.counts <- plyr::count(a))
   
-  a.fact <- as.factor(a)
-  print(a.counts <- plyr::count(a.fact))
+  # Create the partitions
+  partitions <- split(d, a)
+  
+  # How many in each parition
+  print(p.counts <- lapply(partitions, plyr::count))
+  
+  # Entropy for each partition
+  print(Ed <- lapply(partitions, entropy))
+  ed2 <- data.frame(names(Ed), Ed)
+  
+  fn.njn <- function(r)
+  {
+    return (r$freq / sum(r$freq))
+  }
   
   
+  print(njn <- lapply(p.counts, fn.njn)) # [as.character(a.counts$x)]$freq / a.counts$freq))
+  print(njnEd <- lapply(Ed, njn)
 }
 
 # Load the test data
-(pathToCsv <- file.path("C:/SourceCode/R/DataAcqMgmt/Week3", "entropy-test-file.csv"))
+(pathToCsv <- file.path(getwd(), "Week3", "entropy-test-file.csv"))
 head(testData <- read.table(file = pathToCsv, header = TRUE, sep = ","))
 
 # Run through the hoops
