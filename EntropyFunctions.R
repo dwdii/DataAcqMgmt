@@ -49,7 +49,8 @@ infogain <- function(d, a)
   
   # Entropy for each partition
   print(Ed <- lapply(partitions, entropy))
-  ed2 <- data.frame(names(Ed), Ed)
+  
+  print(En.part <- data.frame(Ed))
   
   fn.njn <- function(r)
   {
@@ -58,7 +59,7 @@ infogain <- function(d, a)
   
   
   print(njn <- lapply(p.counts, fn.njn)) # [as.character(a.counts$x)]$freq / a.counts$freq))
-  print(njnEd <- lapply(Ed, njn)
+  #print(njnEd <- lapply(Ed, njn))
 }
 
 # Load the test data
