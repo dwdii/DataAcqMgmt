@@ -65,17 +65,90 @@ t2 <- data.frame(first=c(12,10,11,14,13,20, NA), second=c(21,22,4,5,8,7, NA), th
 # Do not use any built in functions to do this. Return a named list with the eight
 # desired values in an order you deem best. You may if you like use the function
 # you wrote for question 1.
+my.length <- function(numVector)
+{
+  result <- list(count=0, total=0)
+  for (n in numVector)
+  {
+    if(!is.na(n))
+    {
+      result$count <- result$count + 1  
+    }
+    
+    result$total <- result$total + 1
+  }
+  
+  return(result)
+
+}
+my.sort <- function(numVector)
+{
+  # First count up the non-NA values
+  len <- my.length(numVector)
+  
+  # Loop insertion sort
+  for (i in seq(1, len$total))
+  {
+    current <- numVector[i]
+    for (j in seq(1, i, 1))
+    {
+      candidate <- numVector[j]  
+      if (j < i)
+      {
+        if (is.na(candidate) || (!is.na(current) && candidate > current))
+        {
+          for (k in seq(i, j, -1))
+          {
+            if(k > 1)
+            {
+              numVector[k] <- numVector[k - 1]  
+            }
+          }
+          
+          numVector[j] = current
+          break
+        }
+      } else
+      {
+        break
+      }
+    }
+  }
+  
+  # take only the non-NA sorted values.
+  outVector <- numVector[1:len$count]
+  
+  # Return
+  return(outVector)
+}
+s1 <- c(1,NA,3,NA,5,NA,7)
+my.sort(s1)
+
+
+my.sum <- function(numVector)
+{
+  sumVal <- 0
+  for (n in numVector)
+  {
+    sumVal <- sumVal + n
+  }
+  
+  return (sumVal)
+}
+
+
 get.numericStats <- function(numVector)
 {
   # Local Vars
   result <- list(min=NA, max=NA, sum=NA, mean=NA, median=NA, firstQ=NA, thirdQ=NA, stdev=NA, missing=NA)
-  sorted <- sort(numVector)
-  vecLength <- length(sorted)
+  sorted <- my.sort(numVector)
+  len <- my.length(sorted)
+  vecLength <- len$count
   
   # Start populating the output
   result$min <- sorted[1]
   result$max <- sorted[vecLength]
-  result$sum <- sum(sorted)
+  result$sum <- my.sum(sorted)
   
   # Mean
   if(0 < vecLength)
@@ -87,7 +160,7 @@ get.numericStats <- function(numVector)
   myMedian <- function(v)
   {
     medres <- NA
-    l <- length(v)
+    l <- my.length(v)$total
     mid <- l / 2
     if(l %% 2 == 0)
     {
@@ -109,8 +182,9 @@ get.numericStats <- function(numVector)
   # Using "Inclusive" Method 1 from: http://www.amstat.org/publications/jse/v14n3/langford.html
   quartile <- function(m, v)
   {
-    odd <- (length(v) %% 2) != 0
-    half <- length(v) / 2
+    len <- my.length(v)
+    odd <- (len$total %% 2) != 0
+    half <- len$total / 2
     if(odd)
     {
       half <- ceiling(half)
@@ -143,7 +217,7 @@ get.numericStats <- function(numVector)
   # Standard Deviation (of Sample)
   diffMean <- sorted - result$mean
   diffMeanSqr <- diffMean ^ 2
-  sumDiffMeanSqr <- sum(diffMeanSqr)
+  sumDiffMeanSqr <- my.sum(diffMeanSqr)
   variance <- sumDiffMeanSqr / (vecLength - 1)
   result$stdev <- sqrt(variance)
   
