@@ -28,6 +28,8 @@ g1
 
 #### 2. ####
 # Show the average IMBD user rating for different genres of movies. Has this changed over time?
+# 
+# Answer: Yes, ratings have changed over time. 
 #
 # First, helper function for determining average rating per genre for a set of movies.
 get.avgRating <- function(genres, someMovies)
