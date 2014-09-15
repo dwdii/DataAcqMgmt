@@ -9,7 +9,7 @@ require(ggplot2)
 require(ggthemes)
 
 # Read in the data 
-movies <- read.table("C:/Code/R/DataAcqMgmt/MovieData/movies.tab", sep="\t", header=TRUE, quote="", comment="")
+movies <- read.table("C:/SourceCode/R/DataAcqMgmt/MovieData/movies.tab", sep="\t", header=TRUE, quote="", comment="")
 
 #### 1. ####
 # Show an appropriate visualization that displays the total number of movies for each decade.
@@ -91,26 +91,44 @@ g3 <- g3 + geom_point()
 g3 <- g3 + labs(title="Movie Rating by Length", x="Length", y="Average User Rating")
 g3
 
+my.linreg <- function(X, y, data, xcol, ycol)
+{
+  result <- list(B.hat = NA, n = NA, SE = NA, t.statistic = NA, p.value = NA)
+  
+  (result$B.hat <- solve( t(X) %*% X ) %*% t(X) %*% y  )  # solve takes the inverse
+  rownames(result$B.hat) <- c("B0", "B1")
+  print(result$B.hat)
+  
+  # Properly, we should do an hypothesis test on the Betas to determine if we can accept
+  # the alternate hypothesis that B1 is != 0... but for now, we will take the value at 
+  # its face value.
+  
+  y.hat <- X %*% result$B.hat
+  print(head(y.hat))
+  
+  data2 <- cbind(data, y.hat)
+  result$n <- nrow(data2)
+  meanMovLength <- mean(data2[,xcol])
+  
+  result$SE <- sqrt( sum ( (data2[,ycol] - data2$y.hat) ^ 2) / result$n - 2 ) / sqrt( sum( (data2[,xcol] - meanMovLength) ^ 2) )
+  print(result$SE)  
+  
+  result$t.statistic <- result$B.hat[2,1] / result$SE
+  
+  result$p.value <- pt(-abs(result$t.statistic), df=result$n - 1)
+  
+  return (result)
+}
+
 # Run linear regression to see that it says
-movies3 <- cbind(movies, ones=c(rep(1, nrow(movies))))
+movies3 <- cbind(moviesNoLengthOutliers, ones=c(rep(1, nrow(moviesNoLengthOutliers))))
 nOnesRating <- as.matrix(movies3[,c("ones", "length")])
 #print(mode(nOnesRating))
 #print(class(nOnesRating))
 X <- as.matrix(nOnesRating)
 y <- as.matrix(movies3[,"rating"])
 
-(B.hat <- solve( t(X) %*% X ) %*% t(X) %*% y  )  # solve takes the inverse
-print(B.hat)
+print(my.linreg(X, y, movies3, "length", "rating"))
 # ones    6.021470578
 # length -0.001076301
 #
-# Properly, we should do an hypothesis test on the Betas to determine if we can accept
-# the alternate hypothesis that B1 is != 0... but for now, we will take the value at 
-# its face value.
-
-# y.hat <- X %*% B.hat
-# print(head(y.hat))
-# movies4 <- cbind(movies3, y.hat)
-# 
-# SE <- sqrt( sum ( (movies$rating - movies$y.hat) ^ 2) / length(movies) - 2) / sqrt( sum( (movies$length - mean(movies$length)) ^ 2))
-# print(SE)
