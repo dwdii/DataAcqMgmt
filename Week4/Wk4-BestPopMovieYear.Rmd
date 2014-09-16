@@ -1,0 +1,28 @@
+---
+title: "Which year were the best popular movies made?"
+author: "Daniel Dittenhafer"
+date: "Tuesday, September 16, 2014"
+output: html_document
+---
+
+Which year were the best popular movies made? 1987? 2002? 1955? Using R and a [dataset provided by Hadley Wickham](http://had.co.nz/data/movies/), have come to a conclusion. But first let me describe my process.
+
+The dataset, originally from [IMDB.com](http://IMBD.com/), provides a variety of data points about each movie going back
+as far as 1893 (but is current only through 2005). Some data points of interest IMDB user rating, the number of rating
+votes cast, the budget for making the film, genre and MPAA rating.
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
