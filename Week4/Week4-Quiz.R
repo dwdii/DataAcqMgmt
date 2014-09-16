@@ -78,7 +78,36 @@ g2
 #### 3. ####
 # Is there a relationship between length of movie and movie rating?
 #
-# Answer: No, length of movie and rating has no relationship.
+# Answer: Based on the chart plot, we would expect no relationship between 
+#         length of movie and rating, but through a linear regression, it
+#         appears there is a weak negative relationship between movie length
+#         and rating.
+#
+#         A 95% Confidence Interval for the slope B1, the expected change in 
+#         rating for a one minute increase in movie length, is -0.002739 through -0.003039.
+#
+# $B.hat
+# [,1]
+# B0  6.156014783
+# B1 -0.002888827
+# 
+# $n
+# [1] 58237
+# 
+# $SE
+# [1] 7.665718e-05
+# 
+# $t.statistic
+# B1 
+# -37.68501 
+# 
+# $p.value
+# B1 
+# 4.43617e-307 
+# 
+# $confidence.interval
+# lower.B1     upper.B1 
+# -0.002738578 -0.0030390
 #
 # First, use mean + 2 stdev as guide to remove outliers
 upperThreshold <- (mean(movies$length) + ( 2 * sd(movies$length)))
@@ -88,47 +117,102 @@ moviesNoLengthOutliers <- subset(movies, movies$length <= upperThreshold)
 # Build scatter plot for rating by length of movie
 g3 <- ggplot(data=moviesNoLengthOutliers, aes(x=length, y=rating))
 g3 <- g3 + geom_point()
-g3 <- g3 + labs(title="Movie Rating by Length", x="Length", y="Average User Rating")
+g3 <- g3 + labs(title="Movie Rating by Length", x="Movie Length (minutes)", y="Average User Rating")
 g3
 
-my.linreg <- function(X, y, data, xcol, ycol)
+# Helper function for simple linear regression.
+my.linreg <- function(X, y, data, xcol, ycol, sigLevel)
 {
-  result <- list(B.hat = NA, n = NA, SE = NA, t.statistic = NA, p.value = NA)
+  result <- list(B.hat = NA, n = NA, SE = NA, t.statistic = NA, p.value = NA, confidence.interval = NA)
   
   (result$B.hat <- solve( t(X) %*% X ) %*% t(X) %*% y  )  # solve takes the inverse
   rownames(result$B.hat) <- c("B0", "B1")
-  print(result$B.hat)
   
-  # Properly, we should do an hypothesis test on the Betas to determine if we can accept
-  # the alternate hypothesis that B1 is != 0... but for now, we will take the value at 
-  # its face value.
-  
+  # Properly, we should do an hypothesis test on the Betas to determine if we can reject
+  # the null hypothese that B1 = 0
   y.hat <- X %*% result$B.hat
-  print(head(y.hat))
   
   data2 <- cbind(data, y.hat)
   result$n <- nrow(data2)
   meanMovLength <- mean(data2[,xcol])
-  
+
+  # Standard Error
   result$SE <- sqrt( sum ( (data2[,ycol] - data2$y.hat) ^ 2) / result$n - 2 ) / sqrt( sum( (data2[,xcol] - meanMovLength) ^ 2) )
-  print(result$SE)  
   
+  # test statistic t
   result$t.statistic <- result$B.hat[2,1] / result$SE
   
-  result$p.value <- pt(-abs(result$t.statistic), df=result$n - 1)
+  # p value 
+  result$p.value <- 2 * pt(-abs(result$t.statistic), df=result$n - 1)
   
+  # Confidence interval
+  t.a <- abs(qt(sigLevel / 2, df=result$n - 2))
+  result$confidence.interval <- c(lower = result$B.hat[2,1] - (t.a * result$SE), upper = result$B.hat[2,1] + (t.a * result$SE))
+  
+  # Return
   return (result)
 }
 
 # Run linear regression to see that it says
 movies3 <- cbind(moviesNoLengthOutliers, ones=c(rep(1, nrow(moviesNoLengthOutliers))))
 nOnesRating <- as.matrix(movies3[,c("ones", "length")])
-#print(mode(nOnesRating))
-#print(class(nOnesRating))
 X <- as.matrix(nOnesRating)
 y <- as.matrix(movies3[,"rating"])
 
-print(my.linreg(X, y, movies3, "length", "rating"))
-# ones    6.021470578
-# length -0.001076301
+significanceLevel = 0.05
+print(linRegInfo <- my.linreg(X, y, movies3, "length", "rating", significanceLevel))
+print(sprintf("A %d%% Confidence Interval for the slope B1, the expected change in rating for a one minute increase in movie length, is %f through %f.", 
+              (1 - significanceLevel) * 100, 
+              linRegInfo$confidence.interval["lower.B1"], 
+              linRegInfo$confidence.interval["upper.B1"]))
+
+#### 4. ####
+# Is there a relationship between length of movie and genre?
 #
+# Answer: Based on the results of the following R code and plot charts
+#         the Animation and Short genres are 25 minutes or less, while
+#         the other genres hover might around 90 minutes. As such,
+#         I conclude there is a relationship between movie length and genre.
+#
+glData <- data.frame(genre=NULL, length=NULL)
+for(g in genres)
+{
+  gl <- moviesNoLengthOutliers[moviesNoLengthOutliers[,g] == 1,]$length
+  df <- data.frame(genre=c(rep(g, length(gl))), length=gl)
+  glData <- merge(x=glData, y=df, all=TRUE)
+  
+}
+print(head(glData))
+
+# Build violin
+g4 <- ggplot(data=glData, aes(x=genre, y=length))
+g4 <- g4 + geom_violin(aes(group=genre))
+g4 <- g4 + labs(title="Movie Length by Genre", x="Genre", y="Movie Length (minutes)")
+g4
+
+#### 5. ####
+# Which other variable best predicts total number of votes that a movie received?
+#
+# Answer: Rating is a good predictor of votes based on both a visual inspection
+#         and a linear regression.
+#
+#         A 95% Confidence Interval for the slope B1, the expected change in 
+#         votes for a unit increase in rating, is 235.904710 through 275.557188.
+#
+# Build scatter plot for rating by length of movie
+g5v <- ggplot(data=movies, aes(x=rating, y=votes))
+g5v <- g5v + geom_point()
+g5v <- g5v + labs(title="User Votes by Movie Rating", x="Rating", y="Votes")
+g5v
+
+movies5v <- cbind(movies, ones=c(rep(1, nrow(movies))))
+onesRating <- as.matrix(movies5v[,c("ones", "rating")])
+X <- as.matrix(onesRating)
+y <- as.matrix(movies5v[,"votes"])
+
+significanceLevel = 0.05
+print(linRegInfo <- my.linreg(X, y, movies5v, "rating", "votes", significanceLevel))
+print(sprintf("A %d%% Confidence Interval for the slope B1, the expected change in votes for a unit increase in rating, is %f through %f.", 
+              (1 - significanceLevel) * 100, 
+              linRegInfo$confidence.interval["lower.B1"], 
+              linRegInfo$confidence.interval["upper.B1"]))
