@@ -8,7 +8,9 @@ program's Data Acquisition and Management course (IS607) under Professor Michael
 
 ### Week 4
 
-During week 4, I analyzed [IMDB](http://imdb.com) movie data transformed and shared by [Hadley Wickham](http://had.co.nz/).
+During [week 4](https://github.com/dwdii/DataAcqMgmt/tree/master/Week4), I analyzed [IMDB](http://imdb.com) 
+movie data transformed and shared by [Hadley Wickham](http://had.co.nz/). 
+Some of the charts resulting from my analysis follow.
 
 ![Movies Per Decade](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week4/MoviesPerDecade.png)
 
