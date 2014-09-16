@@ -78,13 +78,13 @@ g2
 #### 3. ####
 # Is there a relationship between length of movie and movie rating?
 #
-# Answer: Based on the chart plot, we would expect no relationship between 
+# Answer: Based on the chart plot, we might expect no relationship between 
 #         length of movie and rating, but through a linear regression, it
 #         appears there is a weak negative relationship between movie length
 #         and rating.
 #
 #         A 95% Confidence Interval for the slope B1, the expected change in 
-#         rating for a one minute increase in movie length, is -0.002739 through -0.003039.
+#         rating for a one minute increase in movie length, is -0.003039 through -0.002739.
 #
 # $B.hat
 # [,1]
@@ -107,7 +107,7 @@ g2
 # 
 # $confidence.interval
 # lower.B1     upper.B1 
-# -0.002738578 -0.0030390
+# -0.003039075 -0.002738578 
 #
 # First, use mean + 2 stdev as guide to remove outliers
 upperThreshold <- (mean(movies$length) + ( 2 * sd(movies$length)))
@@ -128,7 +128,7 @@ my.linreg <- function(X, y, data, xcol, ycol, sigLevel)
   (result$B.hat <- solve( t(X) %*% X ) %*% t(X) %*% y  )  # solve takes the inverse
   rownames(result$B.hat) <- c("B0", "B1")
   
-  # Properly, we should do an hypothesis test on the Betas to determine if we can reject
+  # Properly, we should do an hypothesis test on Beta1 to determine if we can reject
   # the null hypothese that B1 = 0
   y.hat <- X %*% result$B.hat
   
@@ -153,7 +153,7 @@ my.linreg <- function(X, y, data, xcol, ycol, sigLevel)
   return (result)
 }
 
-# Run linear regression to see that it says
+# Run linear regression to see what it says
 movies3 <- cbind(moviesNoLengthOutliers, ones=c(rep(1, nrow(moviesNoLengthOutliers))))
 nOnesRating <- as.matrix(movies3[,c("ones", "length")])
 X <- as.matrix(nOnesRating)
@@ -171,7 +171,7 @@ print(sprintf("A %d%% Confidence Interval for the slope B1, the expected change 
 #
 # Answer: Based on the results of the following R code and plot charts
 #         the Animation and Short genres are 25 minutes or less, while
-#         the other genres hover might around 90 minutes. As such,
+#         the other genres hover right around 90 minutes. As such,
 #         I conclude there is a relationship between movie length and genre.
 #
 glData <- data.frame(genre=NULL, length=NULL)
@@ -184,7 +184,7 @@ for(g in genres)
 }
 print(head(glData))
 
-# Build violin
+# Build violin plot
 g4 <- ggplot(data=glData, aes(x=genre, y=length))
 g4 <- g4 + geom_violin(aes(group=genre))
 g4 <- g4 + labs(title="Movie Length by Genre", x="Genre", y="Movie Length (minutes)")
@@ -194,7 +194,8 @@ g4
 # Which other variable best predicts total number of votes that a movie received?
 #
 # Answer: Rating is a good predictor of votes based on both a visual inspection
-#         and a linear regression.
+#         and a linear regression, though the relationship falls apart above 
+#         a rating of ~8.5 where very few votes equate to high ratings
 #
 #         A 95% Confidence Interval for the slope B1, the expected change in 
 #         votes for a unit increase in rating, is 235.904710 through 275.557188.
