@@ -71,3 +71,7 @@ plot(cars)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Links I found useful while working this assignment:
+
+* [StackOverflow: How to Change the Order of a Discrete X Scale in ggplot](http://stackoverflow.com/questions/3253641/how-to-change-the-order-of-a-discrete-x-scale-in-ggplot)
