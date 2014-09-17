@@ -25,18 +25,19 @@ is intuitive, but the concept is that if a movie is popular, good or bad, it wil
 receive more votes.
 
 ```{r}
-# Load the movie data st
-movies <- read.table("C:/SourceCode/R/DataAcqMgmt/MovieData/movies.tab", sep="\t", header=TRUE, quote="", comment="")
+# Load the movie data set
+movies <- read.table("C:/Code/R/DataAcqMgmt/MovieData/movies.tab", sep="\t", header=TRUE, quote="", comment="")
 
-# Group by year and sum votes and # movies/yr
+# Group by year and sum votes 
 votesByYear <- aggregate(votes ~ year, movies, sum)
-moviesByYear <- aggregate(movies$year, by=list(year=movies$year), FUN=length)
-names(moviesByYear) <- c("year", "count")
+
+# Using plyr::count to determine movies/yr
+moviesByYear <- plyr::count(movies, "year")
 moviesVotesByYear <- merge(votesByYear, moviesByYear, by="year")
 
 # Divide votes by # movies in the year to account for years with more 
 # movies contributing to more total votes
-avgVotesPerMovie <- moviesVotesByYear$votes / moviesVotesByYear$count
+avgVotesPerMovie <- moviesVotesByYear$votes / moviesVotesByYear$freq
 moviesVotesByYear <- cbind(moviesVotesByYear, avgVotesPerMovie)
 
 # Sort votes descending and grab the 10 years with most votes
@@ -59,15 +60,33 @@ Now that we have a list of candidate years with popular movies, the `rating` dat
 can be brought in as a proxy for "best". 
 
 ```{r}
-
-
+avgRatings <- aggregate(rating ~ year, movies, mean)
+popMoviesAvgRating <- subset(avgRatings, year %in% mostPopularByVote$year, year:rating)
+popMoviesAvgRating <- popMoviesAvgRating[order(-popMoviesAvgRating$rating), ]
+print(popMoviesAvgRating)
 
 ```
-
-You can also embed plots, for example:
 
 ```{r, echo=FALSE}
-plot(cars)
+g2 <- ggplot(data=popMoviesAvgRating, aes(x=factor(year), y=rating))
+g2 <- g2 + geom_bar(stat="identity")
+g2 <- g2 + scale_x_discrete(labels=as.character(popMoviesAvgRating$year),
+                            limits=as.character(popMoviesAvgRating$year))
+g2 <- g2 + labs(title="Top 10 Years for Best Popular Movies", x="Year", y="Average Rating / Year")
+g2
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Based on the analysis described above, the year 2002 appears to be the year when the best popular movies were made.
+
+```{r}
+# Extract movies for the specific year and sort by votes and rating
+moviesIn2002 <- subset(movies, year == 2002, c("title", "votes", "rating"))
+moviesIn2002Sorted <- moviesIn2002[order(-moviesIn2002$votes, -moviesIn2002$rating),]
+
+# Pull out top 10
+top10MoviesIn2002 <- moviesIn2002Sorted[1:10,]
+print(top10MoviesIn2002)
+
+```
+
