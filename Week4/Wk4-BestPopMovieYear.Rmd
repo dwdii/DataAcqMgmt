@@ -4,19 +4,64 @@ author: "Daniel Dittenhafer"
 date: "Tuesday, September 16, 2014"
 output: html_document
 ---
+```{r, echo=FALSE}
+require(ggplot2)
+```
 
-Which year were the best popular movies made? 1987? 2002? 1955? Using R and a [dataset provided by Hadley Wickham](http://had.co.nz/data/movies/), have come to a conclusion. But first let me describe my process.
+Which year were the best popular movies made? 1987? 2002? 1955? Using R and a 
+[dataset provided by Hadley Wickham](http://had.co.nz/data/movies/), I have come
+to a conclusion. But first let me describe my process.
 
-The dataset, originally from [IMDB.com](http://IMBD.com/), provides a variety of data points about each movie going back
-as far as 1893 (but is current only through 2005). Some data points of interest IMDB user rating, the number of rating
-votes cast, the budget for making the film, genre and MPAA rating.
+The dataset, originally from [IMDB.com](http://IMBD.com/), provides a variety 
+of data points about each movie going back as far as 1893 (but is current only 
+through 2005). Some data points of interest include IMDB user rating, the 
+number of rating votes cast, the budget for making the film, genre and MPAA rating.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Given that this dataset comes originally from IMDB.com, an internet website, the user ratings are 
+most likely biased to those movies for which internet users find compelling in some way. 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+My approach is to use the `votes` data point as a proxy for popularity. Hopefully this
+is intuitive, but the concept is that if a movie is popular, good or bad, it will 
+receive more votes.
 
 ```{r}
-summary(cars)
+# Load the movie data st
+movies <- read.table("C:/SourceCode/R/DataAcqMgmt/MovieData/movies.tab", sep="\t", header=TRUE, quote="", comment="")
+
+# Group by year and sum votes and # movies/yr
+votesByYear <- aggregate(votes ~ year, movies, sum)
+moviesByYear <- aggregate(movies$year, by=list(year=movies$year), FUN=length)
+names(moviesByYear) <- c("year", "count")
+moviesVotesByYear <- merge(votesByYear, moviesByYear, by="year")
+
+# Divide votes by # movies in the year to account for years with more 
+# movies contributing to more total votes
+avgVotesPerMovie <- moviesVotesByYear$votes / moviesVotesByYear$count
+moviesVotesByYear <- cbind(moviesVotesByYear, avgVotesPerMovie)
+
+# Sort votes descending and grab the 10 years with most votes
+votesByYearSorted <- moviesVotesByYear[order(-moviesVotesByYear$avgVotesPerMovie), ]
+mostPopularByVote <- votesByYearSorted[1:10, ]
+
+print(mostPopularByVote)
+```
+
+```{r, echo=FALSE}
+g1 <- ggplot(data=mostPopularByVote, aes(x=factor(year), y=avgVotesPerMovie))
+g1 <- g1 + geom_bar(stat="identity")
+g1 <- g1 + scale_x_discrete(labels=as.character(mostPopularByVote$year), limits=as.character(mostPopularByVote$year))
+g1 <- g1 + labs(title="Top 10 Average Votes per Movie", x="Year", y="Average Votes / Movie")
+g1
+
+```
+
+Now that we have a list of candidate years with popular movies, the `rating` data point 
+can be brought in as a proxy for "best". 
+
+```{r}
+
+
+
 ```
 
 You can also embed plots, for example:
