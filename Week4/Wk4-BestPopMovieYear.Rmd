@@ -63,7 +63,10 @@ g1
 ```
 
 Now that we have a list of candidate years with popular movies, the `rating` data point 
-can be brought in as a proxy for "best". The following R code 
+can be brought in as a proxy for "best". The following R code first calculates the
+mean rating per year across all movies and then pulls out the years that were found
+to be most popular based on the `votes` metric. Finally, the popular movies
+are sorted by rating descending.
 
 ```{r}
 # Determine average movie rating per year
