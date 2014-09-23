@@ -7,6 +7,7 @@
 #
 require(tidyr)
 require(plyr)
+require(ggplot2)
 
 #### 1. ####
 # Write down 3 questions that you might want to answer based on this data.
@@ -100,6 +101,13 @@ sumYesNoCityTotal
 cityProportionYesNo <- plyr::ddply(sumYesNoCityTotal, c("city", "response.types"), plyr::summarize, proportion = sum / total)
 cityProportionYesNo
 
+# Visualize
+g1 <- ggplot(data=cityProportionYesNo, aes(x=response.types, y=proportion))
+g1 <- g1 + facet_wrap(~ city)
+g1 <- g1 + geom_bar(stat="identity")
+g1 <- g1 + labs(title="Proportion Who Preferred Cullen Skink over Partan Bree By City", x="Preferred Cullen Skink over Partan Bree", y="Proportion")
+g1
+
 
 # 2. What proportion of the respondents in each age group voted yes vs. no?
 # 
@@ -121,6 +129,13 @@ sumAgeJoin
 ageProportionYesNo <- plyr::ddply(sumAgeJoin, c("lower", "upper", "response.types"), plyr::summarize, proportion = sum / total)
 ageProportionYesNo
 
+# Visualize
+g2 <- ggplot(data=ageProportionYesNo, aes(x=response.types, y=proportion))
+g2 <- g2 + facet_wrap(~ lower + upper)
+g2 <- g2 + geom_bar(stat="identity")
+g2 <- g2 + labs(title="Proportion Who Preferred Cullen Skink over Partan Bree By Age Group", x="Preferred Cullen Skink over Partan Bree", y="Proportion")
+g2
+
 # 3. How many total respondents were there?
 #
 # [1] 973600
@@ -128,7 +143,7 @@ totalRespondents <- sum(tidyData[, "responses"])
 totalRespondents
 
 #### 5. ####
-# Having gone through the process, would you ask different questiosn and/or 
+# Having gone through the process, would you ask different questions and/or 
 # change the way that you structured your data frame?
 #
 # * In Q4 I realized it might be better (faster) if city were a factor and added 
