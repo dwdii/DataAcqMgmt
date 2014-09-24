@@ -1,0 +1,50 @@
+---
+title: 'Profiling a Data Set: Bike Sharing Demand'
+author: "Daniel Dittenhafer"
+date: "Tuesday, September 23, 2014"
+output: pdf_document
+---
+While looking around for a data set to use for this project,I bumped into a [Kaggle competition
+to forecast bike sharing demand](https://www.kaggle.com/c/bike-sharing-demand). The data set 
+looked decent, with 10,886 observations. There were no inherent character columns, the data 
+was already converted to factor-like integer values. As such, in order to better map the data 
+set to this exercise, I am reverting the `season` column to character data to begin with.
+```{r}
+# The path to the local dataset file
+csv_file <- "C:/Users/Dan/Documents/My School/IS607-DataAcqMgmt/Week5/BikeSharingDemand.csv"
+
+# Load the data into a data.frame
+csv <- read.table(csv_file, header=TRUE, sep=",")
+
+# Revert some columns to character data.
+df_s <- data.frame(csv, seasonName=NA)
+df_s[df_s$season == 1,]$seasonName = "spring"
+df_s[df_s$season == 2,]$seasonName <- "summer"
+df_s[df_s$season == 3,]$seasonName <- "fall"
+df_s[df_s$season == 4,]$seasonName <- "winter"
+
+
+# Dimensions
+dim(df_s)
+
+# Summary
+summary(df_s)
+
+head(df_s)
+```
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
