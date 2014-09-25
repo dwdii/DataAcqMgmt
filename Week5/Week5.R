@@ -149,4 +149,7 @@ totalRespondents
 # * In Q4 I realized it might be better (faster) if city were a factor and added 
 #   "convert=TRUE" to the separate call in Q3.
 #
-# * Likewise, to convert to numeric for lower/upperwith, with the extract call in Q3
+# * Likewise, to convert to numeric for lower/upper with regard to the extract call in Q3
+# 
+# * I think my original data frame structure worked well for this exercise, though the 
+#   the data did require melting and tidying.
