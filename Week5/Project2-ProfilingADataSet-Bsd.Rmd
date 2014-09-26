@@ -7,6 +7,8 @@ output: html_document
 ```{r, echo=FALSE} 
 require(ggplot2, quietly=TRUE)
 require(lubridate, quietly=TRUE)
+require(DMwR, quietly=TRUE)
+projRoot <- "C:/Code/R/DataAcqMgmt"
 ```
 ----------------------------------------------------------------------------------------------------
 Data Set         Number of              Attribute                        Number of 
@@ -74,7 +76,7 @@ in the code segment that follows.
 
 ```{r}
 # The path to the local dataset file
-csv_file <- file.path(getwd(), "Week5", "BikeSharingDemand.csv")
+csv_file <- file.path(projRoot, "Week5", "BikeSharingDemand.csv")
 
 # Load the data into a data.frame
 csv <- read.table(csv_file, header=TRUE, sep=",")
@@ -118,6 +120,10 @@ Using the `summary()` R function, the basic statistics about each attribute are 
 summary(bikes)
 ```
 
+```{r}
+outliers = lofactor()
+```
+
 ### Correlation Analysis ###
 
 Using the `cor()` R function as shown in the following code, an analysis of correlation between the numeric attributes was performed. 
@@ -153,7 +159,7 @@ bikeCor
 Using Entropy and Information Gain functions developed in a prior exercise, an entropy analysis was performed. Raw entropy of the bike shares per hour was calculated initially.
 
 ```{r}
-source(file.path(getwd(), "EntropyFunctions.R"), chdir=TRUE)
+source(file.path(projRoot, "EntropyFunctions.R"), chdir=TRUE)
 
 # Raw Entropy: Casual Bike Sharing
 entropy(bikes$casual)
