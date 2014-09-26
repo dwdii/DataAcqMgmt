@@ -121,7 +121,8 @@ summary(bikes)
 ```
 
 ```{r}
-outliers = lofactor()
+outliers <- lofactor(bikes[,2:8], k=5)
+outliers
 ```
 
 ### Correlation Analysis ###
