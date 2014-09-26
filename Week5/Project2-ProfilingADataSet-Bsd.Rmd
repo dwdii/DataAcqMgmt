@@ -2,7 +2,7 @@
 title: 'Data Set Profile: Bike Sharing Demand'
 author: "Daniel Dittenhafer"
 date: "Tuesday, September 23, 2014"
-output: pdf_document
+output: html_document
 ---
 ```{r, echo=FALSE} 
 require(ggplot2, quietly=TRUE)
@@ -74,7 +74,7 @@ in the code segment that follows.
 
 ```{r}
 # The path to the local dataset file
-csv_file <- "C:/SourceCode/R/DataAcqMgmt/Week5/BikeSharingDemand.csv"
+csv_file <- file.path(getwd(), "Week5", "BikeSharingDemand.csv")
 
 # Load the data into a data.frame
 csv <- read.table(csv_file, header=TRUE, sep=",")
@@ -153,7 +153,7 @@ bikeCor
 Using Entropy and Information Gain functions developed in a prior exercise, an entropy analysis was performed. Raw entropy of the bike shares per hour was calculated initially.
 
 ```{r}
-source("C:/SourceCode/R/DataAcqMgmt/EntropyFunctions.R", chdir=TRUE)
+source(file.path(getwd(), "EntropyFunctions.R"), chdir=TRUE)
 
 # Raw Entropy: Casual Bike Sharing
 entropy(bikes$casual)
