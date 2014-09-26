@@ -69,8 +69,8 @@ map the data set to this exercise, I am adding a `seasonName` column and
 reverting the `season` column into this new column to begin with. Additionally,
 for analysis purposes the datetime field would be better broken up into 
 components including a simple integer hour of day, individual month value, 
-day of week, etc. Some of these transformations are applied in the code
-segment that follows.
+day of week, segment of the day, etc. Some of these transformations are applied
+in the code segment that follows.
 
 ```{r}
 # The path to the local dataset file
@@ -83,8 +83,7 @@ csv <- read.table(csv_file, header=TRUE, sep=",")
 bikes <- data.frame(csv, 
                     seasonName=NA, hourOfDay=NA, 
                     dayOfWeek=NA, dayOfWeekInt=NA, 
-                    monthOfYear=NA, segmentOfDay=NA,
-                    segmentOfDayInt=NA)
+                    monthOfYear=NA, segmentOfDay=NA)
 bikes[bikes$season == 1,]$seasonName <- "spring"
 bikes[bikes$season == 2,]$seasonName <- "summer"
 bikes[bikes$season == 3,]$seasonName <- "fall"
@@ -104,14 +103,11 @@ bikes$monthOfYear <- lubridate::month(bikes$datetime)
 
 # 18 Add a character column for segment of day
 bikes$segmentOfDay <- ifelse(bikes$hourOfDay >= 5 & bikes$hourOfDay < 12, 
-                                       1, 
-                                       ifelse(bikes$hourOfDay >= 12 & bikes$hourOfDay < 17, 
-                                              2, 
-                                              ifelse(bikes$hourOfDay >= 17 & bikes$hourOfDay < 22, 
-                                                     3, 4)))
-# 19
-#bikes$segmentOfDayInt <- as.numeric(bikes$segmentOfDay) 
-#levels(bikes$segmentOfDay)
+                             1, 
+                             ifelse(bikes$hourOfDay >= 12 & bikes$hourOfDay < 17, 
+                                    2, 
+                                    ifelse(bikes$hourOfDay >= 17 & bikes$hourOfDay < 22, 
+                                           3, 4)))
 ```
 
 ### Summary Statistics ###
@@ -224,7 +220,7 @@ g4 <- g4 + geom_bar(stat="identity")
 g4 <- g4 + theme_minimal()
 g4 <- g4 + scale_x_discrete(labels=as.character(countEntMelt$attribute), limits=as.character(countEntMelt$attribute))
 g4 <- g4 + theme(axis.text.x = element_text(angle=30, vjust=1))
-g4 <- g4 + labs(title="Information Gain - Registered User Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
+g4 <- g4 + labs(title="Information Gain - Total Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
 g4
 countEntMelt
 ```
