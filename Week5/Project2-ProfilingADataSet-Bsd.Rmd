@@ -121,8 +121,17 @@ summary(bikes)
 ```
 
 ```{r}
-outliers <- lofactor(bikes[,2:8], k=5)
-outliers
+outlier.scores <- DMwR::lofactor(bikes[,c(5:9,12)], k=5)
+# outliers
+
+outliers <- order(outlier.scores, decreasing=T)[1:5]
+
+n <- nrow(bikes)
+pch <- rep(".", n)
+pch[outliers] <- "+"
+col <- rep("black", n)
+col[outliers] <- "red"
+pairs(bikes[,c(5:9,12)], pch=pch, col=col)
 ```
 
 ### Correlation Analysis ###
