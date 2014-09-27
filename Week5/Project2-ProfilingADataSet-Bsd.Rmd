@@ -1,7 +1,7 @@
 ---
 title: 'Data Set Profile: Bike Sharing Demand'
 author: "Daniel Dittenhafer"
-date: "Tuesday, September 23, 2014"
+date: "Tuesday, September 27, 2014"
 output: pdf_document
 ---
 ```{r, echo=FALSE} 
@@ -18,7 +18,7 @@ Multivariate    10,886        Business  Categorical, Integer, Date/time  12     
 
 ### Source ###
 
-[Kaggle.com Competition: Bike Sharing Demand](https://www.kaggle.com/c/bike-sharing-demand)
+[Kaggle.com Competition: Bike Sharing Demand](https://www.kaggle.com/c/bike-sharing-demand): https://www.kaggle.com/c/bike-sharing-demand
 
 
 ### Attribute Information ###
@@ -66,8 +66,8 @@ count      integer       the total number of bike shares for the hour
 
 There were no inherent character columns and the data, where appropriate, was 
 already converted to factor-like integer values. As such, in order to better 
-map the data set to this exercise, I am adding a `seasonName` column and 
-reverting the `season` column into this new column to begin with. Additionally,
+map the data set to this exercise, I have added a `seasonName` column and 
+reverted the `season` column into this new column to begin with. Additionally,
 for analysis purposes the datetime field would be better broken up into 
 components including a simple integer hour of day, individual month value, 
 day of week, segment of the day, etc. Some of these transformations are applied
@@ -80,7 +80,7 @@ csv_file <- file.path(projRoot, "Week5", "BikeSharingDemand.csv")
 # Load the data into a data.frame
 csv <- read.table(csv_file, header=TRUE, sep=",")
 
-# Revert some columns to character data.
+# Revert season to character data.
 bikes <- data.frame(csv, 
                     seasonName=NA, hourOfDay=NA, 
                     dayOfWeek=NA, dayOfWeekInt=NA, 
@@ -93,7 +93,7 @@ bikes[bikes$season == 4,]$seasonName <- "winter"
 # 14 Add an integer column for hour of day
 bikes$hourOfDay <- lubridate::hour(bikes$datetime)
 
-# 15 Add an factor and integer column for day of week
+# 15 Add a factor and integer column for day of week
 bikes$dayOfWeek <- as.factor(weekdays(strptime(as.character(bikes$datetime), 
                                                format="%Y-%m-%d %H:%M:%S")))
 # 16
@@ -112,7 +112,8 @@ bikes$segmentOfDay <- ifelse(bikes$hourOfDay >= 5 & bikes$hourOfDay < 12,
 ```
 
 ### Summary Statistics ###
-Using the `summary()` R function, the basic statistics about each attribute are summarized through the raw R output that follows.
+Using the `summary()` R function, the basic statistics about each attribute are
+summarized through the raw R output that follows.
 
 ```{r}
 # Summary
@@ -120,35 +121,46 @@ summary(bikes)
 ```
 
 ### Outlier Analysis ###
-Using the Data Mining with R (DMwR) package's `lofactor()` function, an outlier analysis was performed. Although a complete analysis was performed
-across all categorical and numeric attributes, generally no extreme outliers were detected, with a notable exception. The following R code illustrates
-the approach used in the outlier analysis.
+Using the Data Mining with R (DMwR) package's `lofactor()` function, an outlier
+analysis was performed. Although a complete analysis was performed across all 
+categorical and numeric attributes, generally no extreme outliers were detected, 
+with a notable exception. The following R code illustrates the approach used in
+the outlier analysis with the top 5 outlying points highlighted in the following
+charts via a red plus symbol.
 
 ```{r}
 outlier.scores <- DMwR::lofactor(bikes[,c(5:9, 12)], k=5)
 
 outliers <- order(outlier.scores, decreasing=T)[1:5]
 
+```
+
+One might reasonably expect temperature and apparent temperature to follow one
+another more or less linearly. For each unit increase in temperature, apparent
+temperature would increase by approximately one unit. As shown in the following 
+chart, this is mostly true, except for the August 17, 2012 values. On this day, 
+the connection between temperature and apparent temperature appear broken with 
+`atemp` stuck at 12.12 $^\circ$C. Without further knowledge of the data's 
+origins, one can only speculate as to why this is the case.
+
+```{r, echo=FALSE}
 n <- nrow(bikes)
 pch <- rep(".", n)
 pch[outliers] <- "+"
 col <- rep("black", n)
 col[outliers] <- "red"
 
-```
-
-One might reasonable expect temperature and apparent temperature to follow one another more or less linearly. For each unit increase in temperature, apparent temperature would increase by approximately one unit. As shown in the following chart, this is mostly true, except for the August 17, 2012 values. 
-In this data set, the connection between temperature and apparent temperature appear broken with `atemp` stuck at 12.12 $^\circ$C. Without further knowledge of the data's origins, one can only speculate as to why this is the case.
-
-```{r, echo=FALSE}
+# Plot the outliers along with the other data
 pairs(bikes[,c(6:7,12)], pch=pch, col=col)
 
+# Show the raw data
 bikes[lubridate::day(bikes$datetime) == 17 & lubridate::month(bikes$datetime) == 8 & lubridate::year(bikes$datetime) == 2012,c(1, 6:7)]
 ```
 
 ### Correlation Analysis ###
 
-Using R's `cor()` function, as shown in the following code, an analysis of correlation between the numeric attributes was performed. 
+Using R's `cor()` function, as shown in the following code, an analysis of 
+correlation between the numeric attributes was performed. 
 ```{r}
 
 bikeCor <- cor(bikes[, c(12, 6:11,14,16,17,18)])
@@ -170,7 +182,10 @@ g1
 
 ```
 
-As can be seen in the heat map above and values below, humidity is negatively correlated with bike sharing demand across all three measures (casual, registered and count). Likewise, temperature is positively correlated with bike sharing demand in this data set.
+As can be seen in the heat map above and values below, humidity is negatively
+correlated with bike sharing demand across all three measures (casual, 
+registered and count). Likewise, temperature is positively correlated with bike
+sharing demand in this data set.
 
 ```{r, echo=FALSE}
 bikeCor
@@ -178,7 +193,9 @@ bikeCor
 
 ### Entropy Analysis ###
 
-Using Entropy and Information Gain functions developed in a prior exercise, an entropy analysis was performed. Raw entropy of the bike shares per hour was calculated initially.
+Using Entropy and Information Gain functions developed in a prior exercise, 
+an entropy analysis was performed. Raw entropy of the bike shares per hour was
+calculated initially.
 
 ```{r}
 source(file.path(projRoot, "EntropyFunctions.R"), chdir=TRUE)
@@ -193,7 +210,13 @@ entropy(bikes$registered)
 entropy(bikes$count)
 ```
 
-The `decide()` function from the EntropyFunctions script was used to calculate information gain across all attributes versus the `casual` bike sharing measure. The results were then melted into a long format and sorted for better visualization. The R code is shown below and this process was repeated for the `registered` and `count` measures as well. None of the attributes produced particularly staggering information gain, but the `humidity` attribute was found to be the most meaningful, followed by the `hourOfDay` calculated attribute and `temp`/`atemp` attributes.
+The `decide()` function from the EntropyFunctions script was used to calculate 
+information gain across all attributes versus the `casual` bike sharing measure. 
+The results were then melted into a long format and sorted for better visualization. 
+The R code is shown below and this process was repeated for the `registered` and 
+`count` measures as well. None of the attributes produced particularly staggering
+information gain, but the `humidity` attribute was found to be the most meaningful, 
+followed by the `hourOfDay` calculated attribute and `temp`/`atemp` attributes.
 
 ```{r}
 # Calculate information gain across all categorical and numeric attributes. 
@@ -254,7 +277,8 @@ countEntMelt
 ```
 
 ### Source Code ###
-The raw R markdown code used to produce this data set profile can be found [on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week5/Project2-ProfilingADataSet-Bsd.Rmd).
+The raw R markdown code used to produce this data set profile can be found 
+[on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week5/Project2-ProfilingADataSet-Bsd.Rmd).
 
 ### References ###
 
