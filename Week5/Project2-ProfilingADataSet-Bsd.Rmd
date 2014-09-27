@@ -2,13 +2,12 @@
 title: 'Data Set Profile: Bike Sharing Demand'
 author: "Daniel Dittenhafer"
 date: "Tuesday, September 23, 2014"
-output: html_document
+output: pdf_document
 ---
 ```{r, echo=FALSE} 
 require(ggplot2, quietly=TRUE)
 require(lubridate, quietly=TRUE)
-require(DMwR, quietly=TRUE)
-projRoot <- "C:/Code/R/DataAcqMgmt"
+projRoot <- "C:/SourceCode/R/DataAcqMgmt"
 ```
 ----------------------------------------------------------------------------------------------------
 Data Set         Number of              Attribute                        Number of 
@@ -48,9 +47,9 @@ weather    integer       Categorical;
                          3) Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds;
                          4) Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog; 
                          
-temp       decimal       temperature in Celsius
+temp       decimal       temperature in degrees Celsius
 
-atemp      decimal       apparent temperature in Celsius 
+atemp      decimal       apparent temperature in degrees Celsius 
 
 humidity   integer       relative humidity percentage
 
@@ -103,7 +102,7 @@ bikes$dayOfWeekInt <- as.numeric(bikes$dayOfWeek)
 # 17 Add an integer column for month of year
 bikes$monthOfYear <- lubridate::month(bikes$datetime)
 
-# 18 Add a character column for segment of day
+# 18 Add an integer column for segment of day
 bikes$segmentOfDay <- ifelse(bikes$hourOfDay >= 5 & bikes$hourOfDay < 12, 
                              1, 
                              ifelse(bikes$hourOfDay >= 12 & bikes$hourOfDay < 17, 
@@ -120,9 +119,13 @@ Using the `summary()` R function, the basic statistics about each attribute are 
 summary(bikes)
 ```
 
+### Outlier Analysis ###
+Using the Data Mining with R (DMwR) package's `lofactor()` function, an outlier analysis was performed. Although a complete analysis was performed
+across all categorical and numeric attributes, generally no extreme outliers were detected, with a notable exception. The following R code illustrates
+the approach used in the outlier analysis.
+
 ```{r}
-outlier.scores <- DMwR::lofactor(bikes[,c(5:9,12)], k=5)
-# outliers
+outlier.scores <- DMwR::lofactor(bikes[,c(5:9, 12)], k=5)
 
 outliers <- order(outlier.scores, decreasing=T)[1:5]
 
@@ -131,12 +134,21 @@ pch <- rep(".", n)
 pch[outliers] <- "+"
 col <- rep("black", n)
 col[outliers] <- "red"
-pairs(bikes[,c(5:9,12)], pch=pch, col=col)
+
+```
+
+One might reasonable expect temperature and apparent temperature to follow one another more or less linearly. For each unit increase in temperature, apparent temperature would increase by approximately one unit. As shown in the following chart, this is mostly true, except for the August 17, 2012 values. 
+In this data set, the connection between temperature and apparent temperature appear broken with `atemp` stuck at 12.12 $^\circ$C. Without further knowledge of the data's origins, one can only speculate as to why this is the case.
+
+```{r, echo=FALSE}
+pairs(bikes[,c(6:7,12)], pch=pch, col=col)
+
+bikes[lubridate::day(bikes$datetime) == 17 & lubridate::month(bikes$datetime) == 8 & lubridate::year(bikes$datetime) == 2012,c(1, 6:7)]
 ```
 
 ### Correlation Analysis ###
 
-Using the `cor()` R function as shown in the following code, an analysis of correlation between the numeric attributes was performed. 
+Using R's `cor()` function, as shown in the following code, an analysis of correlation between the numeric attributes was performed. 
 ```{r}
 
 bikeCor <- cor(bikes[, c(12, 6:11,14,16,17,18)])
@@ -158,7 +170,7 @@ g1
 
 ```
 
-As can be seen in the heat map above and values below, humidity is negatively correlated with bike sharing demand across all three measures (casual, registered and count). Likewise, temperature is positively correlated with bike sharing demand in this dataset.
+As can be seen in the heat map above and values below, humidity is negatively correlated with bike sharing demand across all three measures (casual, registered and count). Likewise, temperature is positively correlated with bike sharing demand in this data set.
 
 ```{r, echo=FALSE}
 bikeCor
@@ -181,7 +193,7 @@ entropy(bikes$registered)
 entropy(bikes$count)
 ```
 
-The `decide()` function from the EntropyFunctions script was used to calculate information gain across all attributes versus the `casual` bike sharing measure. The results were then melted into a long format and sorted for better visualization. The R code is shown below and this process was repeated for the `registered` and `count` measures as well. The `humidify` attribute was found to be the most meaning full, followed by our `hourOfDay` calculated attribute.
+The `decide()` function from the EntropyFunctions script was used to calculate information gain across all attributes versus the `casual` bike sharing measure. The results were then melted into a long format and sorted for better visualization. The R code is shown below and this process was repeated for the `registered` and `count` measures as well. None of the attributes produced particularly staggering information gain, but the `humidity` attribute was found to be the most meaningful, followed by the `hourOfDay` calculated attribute and `temp`/`atemp` attributes.
 
 ```{r}
 # Calculate information gain across all categorical and numeric attributes. 
@@ -241,9 +253,13 @@ g4
 countEntMelt
 ```
 
+### Source Code ###
+The raw R markdown code used to produce this data set profile can be found [on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week5/Project2-ProfilingADataSet-Bsd.Rmd).
+
 ### References ###
 
 Fanaee-T, Hadi, and Gama, Joao, Event labeling combining ensemble detectors and background knowledge, Progress in Artificial Intelligence (2013): pp. 1-15, Springer Berlin Heidelberg.
 
 Lander, Jared P. "Correlation and Covariance." R for Everyone: Advanced Analytics and Graphics. New York: Addison-Wesley, 2014. N. pag. Print.
 
+Zhao, Yanchang. "[Outlier Detection - RDataMining.com: R and Data Mining](http://www.rdatamining.com/examples/outlier-detection)" RDataMining.com: R and Data Mining. N.p., 2014. Web. 27 Sept. 2014.
