@@ -151,7 +151,7 @@ col <- rep("black", n)
 col[outliers] <- "red"
 
 # Plot the outliers along with the other data
-pairs(bikes[,c(6:7,12)], pch=pch, col=col)
+pairs(bikes[,c(6:7,12)], pch=pch, col=col, main="Outliers in Context")
 
 # Show the raw data
 bikes[lubridate::day(bikes$datetime) == 17 & lubridate::month(bikes$datetime) == 8 & lubridate::year(bikes$datetime) == 2012,c(1, 6:7)]
