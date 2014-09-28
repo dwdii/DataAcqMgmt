@@ -104,11 +104,12 @@ bikes$monthOfYear <- lubridate::month(bikes$datetime)
 
 # 18 Add an integer column for segment of day
 bikes$segmentOfDay <- ifelse(bikes$hourOfDay >= 5 & bikes$hourOfDay < 12, 
-                             1, 
+                             1, # Morning
                              ifelse(bikes$hourOfDay >= 12 & bikes$hourOfDay < 17, 
-                                    2, 
+                                    2, # Afternoon
                                     ifelse(bikes$hourOfDay >= 17 & bikes$hourOfDay < 22, 
-                                           3, 4)))
+                                           3, # Evening
+                                              4 ))) # Night
 ```
 
 ### Summary Statistics ###
