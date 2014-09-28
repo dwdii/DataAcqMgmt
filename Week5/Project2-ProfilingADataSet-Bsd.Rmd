@@ -1,7 +1,7 @@
 ---
 title: 'Data Set Profile: Bike Sharing Demand'
 author: "Daniel Dittenhafer"
-date: "Tuesday, September 27, 2014"
+date: "Saturday, September 27, 2014"
 output: pdf_document
 ---
 ```{r, echo=FALSE} 
@@ -20,13 +20,19 @@ Multivariate    10,886        Business  Categorical, Integer, Date/time  12     
 
 [Kaggle.com Competition: Bike Sharing Demand](https://www.kaggle.com/c/bike-sharing-demand): https://www.kaggle.com/c/bike-sharing-demand
 
+The goal of the competition, from the Kaggle website, is to "predict the total 
+count of bikes rented during each hour covered by the test set, using only 
+information available prior to the rental period." The data set profiled herein is
+the training data set.
+
 
 ### Attribute Information ###
 
 --------------------------------------------------------------------
 Field      Data Type     Description
 ---------  ------------- --------------------------------------------
-datetime   date & hour   Min: 01/01/2011 00:00;    
+datetime   date & hour   First 19 days of each month
+                         Min: 01/01/2011 00:00;    
                          Max: 12/19/2012 23:00
 
 season     integer       Categorical;
@@ -67,24 +73,25 @@ count      integer       the total number of bike shares for the hour
 There were no inherent character columns and the data, where appropriate, was 
 already converted to factor-like integer values. As such, in order to better 
 map the data set to this exercise, I have added a `seasonName` column and 
-reverted the `season` column into this new column to begin with. Additionally,
-for analysis purposes the datetime field would be better broken up into 
+reverted the `season` column into this new column to begin with. Given the goal
+of the Kaggle competition to predict future bike share count, shifting the 
+`count` values by a fixed period (one hour for example) aids in this analysis. 
+Additionally, for analysis purposes the datetime field would be better broken up into 
 components including a simple integer hour of day, individual month value, 
 day of week, segment of the day, etc. Some of these transformations are applied
 in the code segment that follows.
 
 ```{r}
-# The path to the local dataset file
-csv_file <- file.path(projRoot, "Week5", "BikeSharingDemand.csv")
-
 # Load the data into a data.frame
+csv_file <- file.path(projRoot, "Week5", "BikeSharingDemand.csv")
 csv <- read.table(csv_file, header=TRUE, sep=",")
 
 # Revert season to character data.
 bikes <- data.frame(csv, 
                     seasonName=NA, hourOfDay=NA, 
                     dayOfWeek=NA, dayOfWeekInt=NA, 
-                    monthOfYear=NA, segmentOfDay=NA)
+                    monthOfYear=NA, segmentOfDay=NA,
+                    nextHourDateTime=NA, nextHourCount=NA)
 bikes[bikes$season == 1,]$seasonName <- "spring"
 bikes[bikes$season == 2,]$seasonName <- "summer"
 bikes[bikes$season == 3,]$seasonName <- "fall"
@@ -110,6 +117,15 @@ bikes$segmentOfDay <- ifelse(bikes$hourOfDay >= 5 & bikes$hourOfDay < 12,
                                     ifelse(bikes$hourOfDay >= 17 & bikes$hourOfDay < 22, 
                                            3, # Evening
                                               4 ))) # Night
+
+# Seq vector to help shift 'count' rows by one hour to analysis predicability
+ind <- seq(2, nrow(bikes) + 1, 1)
+ind[length(ind)] <- NA
+
+# 19, 20 Add column showing the 'next hour" datetime and count
+bikes$nextHourDateTime <- bikes[ind,"datetime"]
+bikes$nextHourCount <- bikes[ind, "count"]
+
 ```
 
 ### Summary Statistics ###
@@ -130,7 +146,7 @@ the outlier analysis with the top 5 outlying points highlighted in the following
 charts via a red plus symbol.
 
 ```{r}
-outlier.scores <- DMwR::lofactor(bikes[,c(5:9, 12)], k=5)
+outlier.scores <- DMwR::lofactor(bikes[,c(2:9,12)], k=5)
 
 outliers <- order(outlier.scores, decreasing=T)[1:5]
 
@@ -152,10 +168,71 @@ col <- rep("black", n)
 col[outliers] <- "red"
 
 # Plot the outliers along with the other data
-pairs(bikes[,c(6:7,12)], pch=pch, col=col, main="Outliers in Context")
+#pairs(bikes[,c(5:9, 14, 20)], pch=pch, col=col, main="Outliers in Context")
+pairs(bikes[,c(6:7,17)], pch=pch, col=col, main="Outliers in Context")
 
-# Show the raw data
-bikes[lubridate::day(bikes$datetime) == 17 & lubridate::month(bikes$datetime) == 8 & lubridate::year(bikes$datetime) == 2012,c(1, 6:7)]
+# Show the raw data (well, lets hide it actually)
+#bikes[lubridate::day(bikes$datetime) == 17 & lubridate::month(bikes$datetime) == 8 & lubridate::year(bikes$datetime) == 2012,c(1, 6:7)]
+```
+
+Using an alternative approach to outlier detection, the mean and standard 
+deviation were calculated for the numeric attributes. A distribution analysis
+was not performed, and as such normal distribution is only assumed here. 
+With a 3 standard deviation width on either side of the mean, values that 
+appear outside these bounds could be considered outliers. The following 
+R code performs this analysis and shows the results. 
+
+```{r}
+# Calculate mean/standard deviation
+msd <- sapply(bikes[,c(6:12)], 
+              function(cl) c(mean=mean(cl,na.rm=TRUE), 
+                             stdev=sd(cl,na.rm=TRUE)))
+
+# Melt into long form 
+msdDf <- as.data.frame(t(msd))
+msdDf <- data.frame(attribute=rownames(msdDf), msdDf)
+msdDf <- subset(msdDf, !is.na(msdDf$mean) & !is.na(msdDf$stdev))
+
+# Add lower/upper bounds at 3 stdevs
+xTimes <- 3
+lowers <- msdDf$mean - (xTimes * msdDf$stdev)
+uppers <- msdDf$mean + (xTimes * msdDf$stdev)
+msdDf <- data.frame(msdDf, lower=lowers, upper = uppers)
+msdDf
+```
+
+```{r echo=FALSE}
+# Using for loop, though probably a plyr method would be better here.
+bikeOut <- data.frame(id=seq(1, nrow(bikes),1))
+for(a in msdDf$attribute)
+{
+  cOut <- bikes[, c(a)] < msdDf[msdDf$attribute == a,"lower"] | 
+          msdDf[msdDf$attribute == a,"upper"] < bikes[, c(a)]
+  bikeOut <- cbind(bikeOut, a=cOut)
+}
+
+# Beautify and show results
+bikeOut <- bikeOut[,c(2:ncol(bikeOut))]
+colnames(bikeOut) <- msdDf$attribute
+
+bikeOutSums <- sapply(bikeOut, sum)
+bikeOutSums <- as.data.frame(t(bikeOutSums))
+bikeOutSums <- cbind(bikeOutSums, id=1)
+bikeOutSums <- reshape2::melt(bikeOutSums, 
+                              na.rm=TRUE, 
+                              variable.name="attribute", 
+                              value.name="numOutliers",
+                              id.vars="id")
+
+```
+
+```{r, echo=FALSE}
+g5 <- ggplot(data=bikeOutSums, aes(x=attribute, y=numOutliers))
+g5 <- g5 + geom_bar(stat="identity")
+g5 <- g5 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g5 <- g5 + labs(title="Number of Outliers/Attribute at 3 Standard Deviations")
+g5
+
 ```
 
 ### Correlation Analysis ###
@@ -164,7 +241,7 @@ Using R's `cor()` function, as shown in the following code, an analysis of
 correlation between the numeric attributes was performed. 
 ```{r}
 
-bikeCor <- cor(bikes[, c(12, 6:11,14,16,17,18)])
+bikeCor <- cor(bikes[, c(20,6:12,14,16,17,18)], use="complete.obs")
 bikesCorMelt <- reshape2::melt(bikeCor, varnames=c("x", "y"), value.name="Correlation")
 bikesCorMelt <- bikesCorMelt[order(bikesCorMelt$Correlation),]
 
@@ -186,7 +263,8 @@ g1
 As can be seen in the heat map above and values below, humidity is negatively
 correlated with bike sharing demand across all three measures (casual, 
 registered and count). Likewise, temperature is positively correlated with bike
-sharing demand in this data set.
+sharing demand in this data set. Interestingly, the day of the week `dayOfWeekInt'
+attribute shows virtually no correlation with bike sharing demand.
 
 ```{r, echo=FALSE}
 bikeCor
@@ -201,80 +279,37 @@ calculated initially.
 ```{r}
 source(file.path(projRoot, "EntropyFunctions.R"), chdir=TRUE)
 
-# Raw Entropy: Casual Bike Sharing
-entropy(bikes$casual)
-
-# Raw Entropy: Registered Bike Sharing
-entropy(bikes$registered)
-
 # Raw Entropy: Total Bike Sharing
-entropy(bikes$count)
+entropy(bikes$nextHourCount)
 ```
 
 The `decide()` function from the EntropyFunctions script was used to calculate 
-information gain across all attributes versus the `casual` bike sharing measure. 
+information gain across all attributes versus the `nextHourCount` bike sharing measure 
+which was added to aid with prediction analysis. 
+
 The results were then melted into a long format and sorted for better visualization. 
-The R code is shown below and this process was repeated for the `registered` and 
-`count` measures as well. None of the attributes produced particularly staggering
+The R code is shown below. None of the attributes produced particularly staggering
 information gain, but the `humidity` attribute was found to be the most meaningful, 
-followed by the `hourOfDay` calculated attribute and `temp`/`atemp` attributes.
+followed by the `hourOfDay` calculated attribute and `atemp`/`temp` attributes.
 
 ```{r}
 # Calculate information gain across all categorical and numeric attributes. 
-casualEnt <- decide(bikes[,c(2,3,4,5,6,7,8,9,10,14,15,17,18)], 9)
+nextHrEnt <- decide(bikes[,c(2,3,4,5,6,7,8,9,14,15,17,18,20)], 13)
 
-casEntMelt <- reshape2::melt(casualEnt$gains, value.name="info.gain")
-casEntMelt <- cbind(casEntMelt, attribute=rownames(casEntMelt))
-casEntMelt <- casEntMelt[order(-casEntMelt$info.gain),]
+nextHrEntMelt <- reshape2::melt(nextHrEnt$gains, value.name="info.gain")
+nextHrEntMelt <- cbind(nextHrEntMelt, attribute=rownames(nextHrEntMelt))
+nextHrEntMelt <- nextHrEntMelt[order(-nextHrEntMelt$info.gain),]
 ```
 ```{r, echo=FALSE}
 require(ggplot2)
-g2 <- ggplot(data=casEntMelt, aes(x=factor(attribute), y=info.gain))
+g2 <- ggplot(data=nextHrEntMelt, aes(x=factor(attribute), y=info.gain))
 g2 <- g2 + geom_bar(stat="identity")
 g2 <- g2 + theme_minimal()
-g2 <- g2 + scale_x_discrete(labels=as.character(casEntMelt$attribute), limits=as.character(casEntMelt$attribute))
+g2 <- g2 + scale_x_discrete(labels=as.character(nextHrEntMelt$attribute), limits=as.character(nextHrEntMelt$attribute))
 g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
-g2 <- g2 + labs(title="Information Gain - Casual Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
+g2 <- g2 + labs(title="Information Gain - Next Hour Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
 g2
-casEntMelt
-```
-
-```{r, echo=FALSE}
-regEnt <- decide(bikes[,c(2,3,4,5,6,7,8,9,11,14,15,17,18)], 9)
-
-regEntMelt <- reshape2::melt(regEnt$gains, value.name="info.gain")
-regEntMelt <- cbind(regEntMelt, attribute=rownames(regEntMelt))
-regEntMelt <- regEntMelt[order(-regEntMelt$info.gain),]
-```
-```{r, echo=FALSE}
-require(ggplot2)
-g3 <- ggplot(data=regEntMelt, aes(x=factor(attribute), y=info.gain))
-g3 <- g3 + geom_bar(stat="identity")
-g3 <- g3 + theme_minimal()
-g3 <- g3 + scale_x_discrete(labels=as.character(regEntMelt$attribute), limits=as.character(regEntMelt$attribute))
-g3 <- g3 + theme(axis.text.x = element_text(angle=30, vjust=1))
-g3 <- g3 + labs(title="Information Gain - Registered User Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
-g3
-regEntMelt
-```
-
-```{r, echo=FALSE}
-countEnt <- decide(bikes[,c(2,3,4,5,6,7,8,9,12,14,15,17,18)], 9)
-
-countEntMelt <- reshape2::melt(countEnt$gains, value.name="info.gain")
-countEntMelt <- cbind(countEntMelt, attribute=rownames(countEntMelt))
-countEntMelt <- countEntMelt[order(-countEntMelt$info.gain),]
-```
-```{r, echo=FALSE}
-require(ggplot2)
-g4 <- ggplot(data=countEntMelt, aes(x=factor(attribute), y=info.gain))
-g4 <- g4 + geom_bar(stat="identity")
-g4 <- g4 + theme_minimal()
-g4 <- g4 + scale_x_discrete(labels=as.character(countEntMelt$attribute), limits=as.character(countEntMelt$attribute))
-g4 <- g4 + theme(axis.text.x = element_text(angle=30, vjust=1))
-g4 <- g4 + labs(title="Information Gain - Total Bike Shares by Partition", x="Paritioning Attribute", y="Information Gain")
-g4
-countEntMelt
+nextHrEntMelt
 ```
 
 ### Source Code ###
@@ -287,4 +322,7 @@ Fanaee-T, Hadi, and Gama, Joao, Event labeling combining ensemble detectors and 
 
 Lander, Jared P. "Correlation and Covariance." R for Everyone: Advanced Analytics and Graphics. New York: Addison-Wesley, 2014. N. pag. Print.
 
+"[Means and SD for Columns in a Dataframe with NA Values.](http://stackoverflow.com/a/20797794/2604144)" R. StackOverflow, 27 Dec. 2013. Web. 28 Sept. 2014.
+
 Zhao, Yanchang. "[Outlier Detection - RDataMining.com: R and Data Mining](http://www.rdatamining.com/examples/outlier-detection)" RDataMining.com: R and Data Mining. N.p., 2014. Web. 27 Sept. 2014.
+
