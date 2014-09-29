@@ -10,11 +10,12 @@ require(lubridate, quietly=TRUE)
 projRoot <- "C:/SourceCode/R/DataAcqMgmt"
 ```
 ----------------------------------------------------------------------------------------------------
-Data Set         Number of              Attribute                        Number of 
-Characteristics  Observations Area      Characteristics                  Attributes  Missing Values?
---------------- ------------- --------- -------------------------------- ----------- ---------------
-Multivariate    10,886        Business  Categorical, Integer, Date/time  12          No     
---------------------------------------- -------------------------------- ----------- ---------------
+Data Set         Number of              Attribute              Number of 
+Characteristics  Observations Area      Characteristics        Attributes Missing Values?
+--------------- ------------- --------- ---------------------- ---------- ---------------
+Multivariate    10,886        Business  Categorical, Integer,  12         No     
+                                        Date/time, Decimal  
+--------------------------------------- ---------------------- ---------- ---------------
 
 ### Source ###
 
@@ -75,11 +76,12 @@ already converted to factor-like integer values. As such, in order to better
 map the data set to this exercise, I have added a `seasonName` column and 
 reverted the `season` column into this new column to begin with. Given the goal
 of the Kaggle competition to predict future bike share count, shifting the 
-`count` values by a fixed period (one hour for example) aids in this analysis. 
+`count` values by a fixed period aids in this analysis. 
 Additionally, for analysis purposes the datetime field would be better broken up into 
 components including a simple integer hour of day, individual month value, 
 day of week, segment of the day, etc. Some of these transformations are applied
-in the code segment that follows.
+in the code segment that follows including the inclusion of a `nextHourCount`
+attribute which reflects the following hour's total bike rentals for a given hour.
 
 ```{r}
 # Load the data into a data.frame
@@ -263,8 +265,10 @@ g1
 As can be seen in the heat map above and values below, humidity is negatively
 correlated with bike sharing demand across all three measures (casual, 
 registered and count). Likewise, temperature is positively correlated with bike
-sharing demand in this data set. Interestingly, the day of the week `dayOfWeekInt'
-attribute shows virtually no correlation with bike sharing demand.
+sharing demand in this data set. Interestingly, the day of the week `dayOfWeekInt`
+attribute shows virtually no correlation with bike sharing demand, but `segmentOfDay`,
+the indicator of morning, afternoon, etc, shows a moderate negative correlation whereby
+apparently more rentals occur in the morning (`segmentOfDay` = 1).
 
 ```{r, echo=FALSE}
 bikeCor
