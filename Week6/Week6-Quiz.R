@@ -9,7 +9,7 @@
 # [For your convenience], here is the provided code from Jared Lander's R for Everyone, 
 # 6.7 Extract Data from Web Sites
 
-install.packages("XML")
+# install.packages("XML")
 require(XML)
 theURL <- "http://www.jaredlander.com/2012/02/another-kind-of-super-bowl-pool/"
 bowlPool <- readHTMLTable(theURL, which = 1, header = FALSE, stringsAsFactors = FALSE)
