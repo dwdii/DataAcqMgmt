@@ -49,7 +49,7 @@ dim(hvalues)
 # Write R code that shows how many HTML tables are represented in hvalues
 #
 # Answer: 7 tables are indicated by the presence of 7 list items in hvalues,
-#         but only 2 of those tables are actually reprented in hvalues with
+#         but only 2 of those tables are actually represented in hvalues with
 #         their contents.
 #
 length(hvalues)
