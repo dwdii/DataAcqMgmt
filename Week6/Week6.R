@@ -7,34 +7,29 @@
 #
 
 library(rvest)
+
+# Using the Kaggle Bike Sharing Demand competition leaderboard as the test bed 
+# for this exercise.
 theURL <- "http://www.kaggle.com/c/bike-sharing-demand/leaderboard"
 bikeShareHtml <- html(theURL)
 
+# Parse and extract the leaderboard table
 leaderboard <- bikeShareHtml %>% 
   html_node("#leaderboard-table") %>% html_table(fill=TRUE) 
 
+# Show dimensions
 dim(leaderboard)
 # [1] 857   6
 
+# And summary
 summary(leaderboard)
-# #             Δ1w            Team Name\r\n                \r\n                                            * in the money     Score       
-# Min.   :  1.0   Length:857         Length:857                                                                                  Min.   :0.2882  
-# 1st Qu.:214.8   Class :character   Class :character                                                                            1st Qu.:0.4707  
-# Median :428.5   Mode  :character   Mode  :character                                                                            Median :0.5441  
-# Mean   :428.5                                                                                                                  Mean   :0.7840  
-# 3rd Qu.:642.2                                                                                                                  3rd Qu.:0.8209  
-# Max.   :856.0                                                                                                                  Max.   :4.7619  
-# NA's   :1                                                                                                                                      
-#     Entries        Last Submission UTC (Best − Last Submission)
-#  Min.   :  1.000   Length:857                                  
-#  1st Qu.:  2.000   Class :character                            
-#  Median :  5.000   Mode  :character                            
-#  Mean   :  9.664                                               
-#  3rd Qu.: 12.000                                               
-#  Max.   :391.000                                               
-#  NA's   :1      
+   
+# Show the data.frame in RStudio's data viewer.
+leaderboard %>% View()
 
-head(leaderboard)
+# Print out the team that is currently in first place and their score.
+print(sprintf("The current team in first place for the Bike Sharing Demand Competition is %s with a score of %f", 
+              stringr::word(stringr::str_trim(leaderboard[1,3]))[1], leaderboard[1,4]))
 
 #### Optional ####
 # list all avalable demos
