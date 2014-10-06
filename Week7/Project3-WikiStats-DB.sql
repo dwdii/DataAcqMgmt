@@ -28,3 +28,7 @@ CREATE TABLE pageviews (
 
 );
 
+
+SELECT * FROM rawstage ORDER BY pageviews DESC LIMIT 10
+
+SELECT * FROM language
