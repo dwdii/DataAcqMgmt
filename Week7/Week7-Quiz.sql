@@ -9,10 +9,10 @@
 -- 1. PostgreSQL sample database dvdrental was downloaded and restorted into 
 --    my local server.
 
--- 2. How many fils contain the word bride in their title?
+-- 2. How many films contain the word bride in their title?
 --
 -- Answer: While no films have the all lowercase word "bride" in their title,
---         2 films have the mix-case word "Bride" in their title:
+--         2 films have the mixed-case word "Bride" in their title:
 --
 --           1) Bride Intrigue
 --           2) Saints Bride
