@@ -11,9 +11,10 @@ CREATE TABLE language (
 
 CREATE TABLE page (
 	id serial PRIMARY KEY,
-	page text UNIQUE,
+	page text,
 	languageid INT,
 
+	UNIQUE(page, languageid),
 	CONSTRAINT Page_Language FOREIGN KEY (languageid) REFERENCES language(id)
 );
 
@@ -37,11 +38,11 @@ SELECT * FROM page LIMIT 100;
 
 SELECT * FROM pageviews LIMIT 100
 
-SELECT * FROM rawstage ORDER BY pageviews DESC LIMIT 10;
+SELECT * FROM rawstage ORDER BY pageviews DESC LIMIT 10000;
 
 SELECT p.page, pv.pageviews FROM page p
-	LEFT JOIN pageviews pv ON pv.pageid = p.id
+	INNER JOIN pageviews pv ON pv.pageid = p.id
 	ORDER BY pv.pageviews DESC
-	LIMIT 10;
+	LIMIT 5;
 	
 */
