@@ -1,4 +1,4 @@
-﻿-- 
+-- 
 -- Author: Daniel Dittenhafer
 --
 -- Created: Oct 4, 2014
@@ -6,7 +6,7 @@
 -- Description: Answers to Week 7 Quiz
 --
 
--- 1. PostgreSQL sample database dvdrental was downloaded and restorted into 
+-- 1. PostgreSQL sample database dvdrental was downloaded and restored into 
 --    my local server.
 
 -- 2. How many films contain the word bride in their title?
@@ -26,7 +26,7 @@ SELECT title FROM film WHERE title LIKE '%Bride%'
 -- 
 -- Answer: In the ORDER BY clause, ANSI SQL will only allow columns
 --         that appear in the select list. PostgreSQL allows not just
---         the ANSE SQL standard of select list columns in the ORDER BY
+--         the ANSI SQL standard of select list columns in the ORDER BY
 --         clause, but also any other column from the tables being queried.
 --	   By using this functionality, you might gain flexibility in the query
 --         but potentially at the expense of getting locked into RDBMS systems
