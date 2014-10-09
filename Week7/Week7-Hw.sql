@@ -50,7 +50,15 @@ INSERT INTO vehiclepart (name, partnumber, vehicleid) VALUES ('Rollbar', '345030
 INSERT INTO vehiclepart (name, partnumber, vehicleid) VALUES ('Air snorkle', '345030654', 3);
 INSERT INTO vehiclepart (name, partnumber, vehicleid) VALUES ('Soft top', '345030765', 3);
 
+-- 4. Provie samples of the different kinds of joins across the two tables. You should include
+--    one join that performs a WHERE on the COLUMN that allows a NULL value. 
+SELECT * FROM vehicle v
+  INNER JOIN vehiclepart vp ON vp.vehicleid = v.id 
 
-SELECT * FROM vehicle
+SELECT make, model, year, retailprice, availablestarting 
+	FROM vehicle v
+		LEFT JOIN vehiclepart vp ON vp.vehicleid = v.id
+	WHERE description LIKE '%bri%'
 
-SELECT * FROM vehiclepart
+SELECT make, model, vp.name AS partname, vp.partnumber FROM vehiclepart vp
+	INNER JOIN vehicle v ON v.id = vp.vehicleid
