@@ -1,4 +1,4 @@
-﻿-- 1. Create a new database for the wiki stats data.
+-- 1. Create a new database for the wiki stats data.
 -- CREATE DATABASE wikidata;
 DROP TABLE pageviews;
 DROP TABLE page;
@@ -60,6 +60,11 @@ SELECT * FROM pageviews WHERE pageid = 916
 SELECT hourstamp, COUNT(*) FROM pageviews GROUP BY hourstamp --WHERE hourstamp = '2009-10-03 02:00:00'
 UPDATE pageviews SET hourstamp = '2008-10-01 01:00:00' WHERE hourstamp = '2009-10-01 01:00:00'
 
+SELECT p.page, COALESCE(pv.pageviews, 0) FROM page p
+  INNER JOIN pageviews pv ON pv.pageid = p.id
+	WHERE pv.hourstamp = '2014-10-01 14:00:00'
+	ORDER BY COALESCE(pv.pageviews, 0) DESC
+	LIMIT 5;
 
 */
 

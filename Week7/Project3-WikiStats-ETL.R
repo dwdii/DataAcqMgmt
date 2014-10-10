@@ -12,9 +12,10 @@
 require("RPostgreSQL")
 
 # Load the file into a data.frame
-# path <- file.path("C:/SourceCode/R/DataAcqMgmt/Week7/Data", "20141001140000.txt")
-path <- file.path("C:/Users/Dan/Downloads/Wikidata", "pagecounts-20081003-020000")
-hourstamp = '2009-10-03 02:00:00'
+path <- file.path("C:/SourceCode/R/DataAcqMgmt/Week7/Data", "20141001140000.txt")
+hourstamp = '2014-10-01 14:00:00'
+#path <- file.path("C:/Users/Dan/Downloads/Wikidata", "pagecounts-20081003-020000")
+#hourstamp = '2009-10-03 02:00:00'
 wiki.data <- read.table(path, header = FALSE, sep=" ", stringsAsFactors=FALSE, fill=TRUE)
 colnames(wiki.data) <- c("language", "page", "pageviews", "contentsize")
 
@@ -86,7 +87,7 @@ print (sQuery)
 res <- dbGetQuery(con, sQuery)
 
 # Finally swap the pageviews data into the pageviews table
-sQuery <- sprintf("INSERT INTO pageviews (hourstamp, pageid, pageviews, contentsize) SELECT '%s', p.id, SUM(r.pageviews), MAX(r.contentsize) FROM rawstage r INNER JOIN page p ON p.pagemd5 = md5(r.page) AND p.languageid = r.langid INNER JOIN pageviews pv ON pv.pageid = p.id AND pv.hourstamp = '%s' WHERE pv.id IS NULL GROUP BY p.id", hourstamp, hourstamp)
+sQuery <- sprintf("INSERT INTO pageviews (hourstamp, pageid, pageviews, contentsize) SELECT '%s', p.id, SUM(r.pageviews), MAX(r.contentsize) FROM rawstage r INNER JOIN page p ON p.pagemd5 = md5(r.page) AND p.languageid = r.langid LEFT JOIN pageviews pv ON pv.pageid = p.id AND pv.hourstamp = '%s' WHERE pv.id IS NULL GROUP BY p.id", hourstamp, hourstamp)
 #sQuery <- sprintf("SELECT '%s', 1, pageviews, contentsize FROM rawstage r", hourstamp)
 print (sQuery)
 res <- dbGetQuery(con, sQuery)
