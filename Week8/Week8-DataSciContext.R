@@ -64,3 +64,9 @@ g1 <- g1 + annotate("text", x = c(1,1,1,1,1,1), y = c(1,2,3,4,5,6), label = c("A
 g1
 
 sessionInfo()
+
+# Converting R code to HTML
+# theCode <- scan("C:/SourceCode/R/DataAcqMgmt/Week8/Week8-DataSciContext.R", what="character")
+# theHtml <- highr::hi_html(theCode)
+# write(theHtml, "C:/SourceCode/R/DataAcqMgmt/Week8/Week8-DataSciContext.html")
+
