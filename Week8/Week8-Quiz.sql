@@ -1,4 +1,4 @@
-﻿-- 
+-- 
 -- Author: Daniel Dittenhafer
 --
 -- Created: Oct 11, 2014
@@ -36,14 +36,14 @@ INSERT INTO personnel (fullname, title, managerid) VALUES ('Betsy Rafael', 'VP, 
 INSERT INTO personnel (fullname, title, managerid) VALUES ('Gary Wipfler', 'VP, Treasurer', 3);
 
 ------------------------------------------------------------------
--- 2. Write a query that displays all of the information in th table.
+-- 2. Write a query that displays all of the information in the table.
 SELECT p.*, mgr.fullname AS Manager, mgr.title AS MgrTitle FROM personnel p 
 	LEFT JOIN personnel mgr ON mgr.id = p.managerid
 	ORDER BY managerid;
 
 ------------------------------------------------------------------
 -- 3. Assume that (a) Tim Cook replaces Steve Jobs as CEO, and (b) Apple 
---    hypothetically hires Susan Wojcicki away from Google to replace Time Cook 
+--    hypothetically hires Susan Wojcicki away from Google to replace Tim Cook 
 --    as COO, with the COO reports unchanged.
 -- 
 -- First adding Tim Cook and his direct reports to the personnel table.
@@ -75,7 +75,4 @@ UPDATE personnel SET managerid = 9 WHERE managerid = 1;
 
 -- And remove Steve Jobs
 DELETE FROM personnel WHERE id = 1;
-
-
-
 
