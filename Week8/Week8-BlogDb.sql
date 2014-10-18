@@ -1,4 +1,4 @@
-﻿-- 
+-- 
 -- Author: Daniel Dittenhafer
 --
 -- Created: Oct 14, 2014
@@ -8,7 +8,9 @@
 
 -- 1. Blog with comments and tags: http://www.hanselman.com/
 
--- 2. Design the logical database: see associated ER diagram
+-- 2. Design the logical database:
+-- 
+--    See associated ER diagram: https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week8/BlogER.png
 
 -- 3. Implement the physical database
 
