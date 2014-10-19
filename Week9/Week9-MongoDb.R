@@ -10,11 +10,28 @@ require (rmongodb)
 mongohost = "ds047040.mongolab.com:47040"
 user = "admin"
 pass = "a"
+authdb = "admin"
 db = "myfirstmongo"
+ns = sprintf("%s.%s", db, "towns")
 
-mongo <- mongo.create(host=mongohost, username=user, password=pass, db=db)
+mongo <- mongo.create(host=mongohost, username=user, password=pass, db=authdb)
 
-if(mongo.is.connected(mongo)) {
+if(!mongo.is.connected(mongo)) {
+  mongo.get.last.err(mongo)
+} else 
+{
+
   print (mongo.get.database.collections(mongo, db))
   
+  cursor <- mongo.find(mongo, ns)
+  
+  # Step though the matching records and display them
+  while (mongo.cursor.next(cursor))
+    print(mongo.cursor.value(cursor))
+  mongo.cursor.destroy(cursor)
+  
+  
+  mongo.insert(mongo, ns, list(name="New York", population=22200000))
+  
+  mongo.get.last.err(mongo, db=db)
 }
