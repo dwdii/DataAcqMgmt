@@ -10,11 +10,13 @@ require (rmongodb)
 mongohost = "ds047040.mongolab.com:47040"
 user = "admin"
 pass = "a"
-authdb = "admin"
 db = "myfirstmongo"
+authdb = db
+
 ns = sprintf("%s.%s", db, "towns")
 
 mongo <- mongo.create(host=mongohost, username=user, password=pass, db=authdb)
+print (mongo)
 
 if(!mongo.is.connected(mongo)) {
   mongo.get.last.err(mongo)
