@@ -1,0 +1,94 @@
+
+1. Which states have populations less than eight million?
+
+g = { $group : { _id : "$state", totalPop : { $sum : "$pop"}  } }
+m = { $match : {totalPop : { $lte : 8000000 } } }
+
+
+db.zips.aggregate(g, m)
+
+2. What is the fifth largest city in New York?
+
+g = { $group : { _id : { state : "$state", city : "$city"}, cityPop : { $sum : "$pop"} } }
+l = { $limit : 5 }
+s = { $sort  : { cityPop : -1 } }
+m = { $match : { state :"NY" } }
+
+
+db.zips.aggregate([m, g, s, l])
+
+3. What is the total number of cities in each state according to this data set?
+
+g = { $group : { _id : { state : "$state", city : "$city"}, zipCount : { $sum : 1} } }
+s = { $sort  : { cityCount : -1 } }
+g2 = { $group : { _id : { state : "$_id.state"}, cityCount : { $sum : 1} } }
+
+db.zips.aggregate([g, g2, s])
+
+3 alt... does do th city count, but interesting none the less...
+
+map = function () {emit (this.state + "," + this.city, 1);}
+reduce = function (key, values) { return Array.sum(values); }
+qo = { out: "city_zipcounts"}
+db.zips.mapReduce(map, reduce, qo)
+db.city_zipcounts.find()
+
+Challenge
+=========
+
+db.zips.update(
+   { state: { $in: ["CT", "ME", "MA", "NH", "RI", "VT"] } },
+   { $set: { region: "Northeast", division: 1} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["NJ", "NY", "PA"] } },
+   { $set: { region: "Northeast", division: 2} },
+   { multi: true }
+)
+
+
+db.zips.update(
+   { state: { $in: ["IL", "IN", "MI", "OH", "WI"] } },
+   { $set: { region: "Midwest", division: 3} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["IA", "KS", "MN", "MO", "NE", "ND", "SD"] } },
+   { $set: { region: "Midwest", division: 4} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["DE", "FL", "GA", "MD", "NC", "SC", "VA", "DC", "WV"] } },
+   { $set: { region: "South", division: 5} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["AL", "KY", "MS", "TN"] } },
+   { $set: { region: "South", division: 6} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["AR", "LA", "OK", "TX"] } },
+   { $set: { region: "South", division: 7} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["AZ", "CO", "ID", "MT", "NV", "NM", "UT", "WY"] } },
+   { $set: { region: "West", division: 8} },
+   { multi: true }
+)
+
+db.zips.update(
+   { state: { $in: ["AK", "CA", "HI", "OR", "WA"] } },
+   { $set: { region: "West", division: 9} },
+   { multi: true }
+)
+
+4. 
