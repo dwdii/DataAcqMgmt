@@ -9,13 +9,13 @@ db.zips.aggregate(g, m)
 
 2. What is the fifth largest city in New York?
 
-g = { $group : { _id : { state : "$state", city : "$city"}, cityPop : { $sum : "$pop"} } }
-l = { $limit : 5 }
-s = { $sort  : { cityPop : -1 } }
 m = { $match : { state :"NY" } }
+g = { $group : { _id : { state : "$state", city : "$city"}, cityPop : { $sum : "$pop"} } }
+s = { $sort  : { cityPop : -1 } }
+sk = { $skip : 4 }
+l = { $limit : 1 }
 
-
-db.zips.aggregate([m, g, s, l])
+db.zips.aggregate([m, g, s, sk, l])
 
 3. What is the total number of cities in each state according to this data set?
 
@@ -91,4 +91,26 @@ db.zips.update(
    { multi: true }
 )
 
-4. 
+4. What is the average city population by region?
+s = { $sort  : { cityCount : -1 } }
+
+
+g = { $group : { _id : { region: "$region", state: "$state", city : "$city"}, cityPop : { $sum : "$pop"} } }
+g2 = { $group : { _id : { region : "$_id.region"}, avgCityPop : { $avg : "$cityPop" } } }
+
+db.zips.aggregate([g, g2])
+
+5. What region has the most people? the fewest?
+
+g = { $group : { _id : { region: "$region"}, totalPop : { $sum : "$pop"} } }
+s = { $sort  : { totalPop : -1 } }
+
+db.zips.aggregate([g, s])
+
+6. What is the total population of each district?
+
+g = { $group : { _id : { district: "$division"}, totalPop : { $sum : "$pop"} } }
+s = { $sort  : { _id: 1 } }
+
+db.zips.aggregate([g, s])
+
