@@ -23,8 +23,57 @@ http://www.huduser.org/portal/datasets/fmr/fmr2015f/FY2015F_4050_Final.xls
 The data set was downloaded in Microsoft Excel format (XLS) and saved to CSV format to enable
 easier access by the various technologies used throughout this comparative study.
 
+----------------------------------------------------------------------------------------------------
+Data Set         Number of              Attribute              Number of 
+Characteristics  Observations Area      Characteristics        Attributes Missing Values?
+--------------- ------------- --------- ---------------------- ---------- ---------------
+Multivariate    4,769         Business  Categorical, Integer   18         Yes    
+                                          
+--------------------------------------- ---------------------- ---------- ---------------
 
+#### Attribute Information ####
 
+-------------------------------------------------------------------------------
+Field                Data Type     Description
+-------------------  ------------- --------------------------------------------
+fips2000             integer       2000 Census 10-digit state, county, metro code
+
+fips2010             integer       2010 Census 10-digit state, county, metro code
+
+fmr2                 integer       2 bedroom fair market rent
+
+fmr0                 integer       0 bedroom (studio) fair market rent
+
+fmr1                 integer       1 bedroom fair market rent
+
+fmr3                 integer       3 bedroom fair market rent
+
+fmr4                 integer       4 bedroom fair market rent
+
+county               integer       County number
+
+State                integer       State number
+
+CouSub               integer       County Sub number
+
+countyname           string        County Name
+
+Metro_code           string        METROxxxxxxMxxxxx for metropolitan areas and 
+                                   NCNTYxxxxxNxxxxx for nonmetropolitan counties
+
+Areaname             string        Area name
+ 
+county_town_name     string        ???
+
+pop2010              integer       Population of locality from 2010 Census
+
+state_alpha          string        2 character abbreviation for State
+
+fmr_type             integer       Percentile of FMR  
+
+metro                binary        1 = Metro, 0 = non-metro county
+
+---------------------------------------------------------------------
 
 ```{r}
 summary(cars)
