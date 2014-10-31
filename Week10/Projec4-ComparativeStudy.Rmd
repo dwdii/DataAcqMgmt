@@ -2,10 +2,20 @@
 title: 'Comparative Study: R, PostgreSQL, MongoDB'
 author: "Daniel Dittenhafer"
 date: "Thursday, October 30, 2014"
-output: html_document
+output: pdf_document
 ---
 
 ### Data Set Use Case ###
+
+The data set used in this comparative study was obtained from the U.S. Department of Housing and 
+Urban Development (HUD) contains fair market rent (FMR) data points for counties and 
+metropolitan statisitcal areas through-out the United States of America. The FMR data points
+are required to be published by as part of Section 8 of the United States Housing Act of 1937.
+
+The FMR data is used by programs operating under Section 8 including the Housing Choice Voucher,
+the Moderate Rehabilitation, and the project-based voucher programs. External to these programs,
+this data set can be used to better understand differences in housing costs around the country,
+and if compared to other years, how costs are changing over time.
 
 ### Advantages / Disadvantages ###
 
@@ -14,14 +24,13 @@ output: html_document
 ### Appendix ###
 
 #### Data Set Description ####
-The data set used in this comparative study was obtained from the U.S. Department of Housing and 
-Urban Development (HUD) via their Data Sets Portal at http://www.huduser.org/portal/datasets/fmr.html. 
+ 
 The specific data set used is the 2015 Fair Market Rents Country Level Data File:
 
 http://www.huduser.org/portal/datasets/fmr/fmr2015f/FY2015F_4050_Final.xls
 
 The data set was downloaded in Microsoft Excel format (XLS) and saved to CSV format to enable
-easier access by the various technologies used throughout this comparative study.
+easier access by the various technologies used throughout this study.
 
 ----------------------------------------------------------------------------------------------------
 Data Set         Number of              Attribute              Number of 
@@ -75,8 +84,17 @@ metro                binary        1 = Metro, 0 = non-metro county
 
 ---------------------------------------------------------------------
 
+#### R Code ####
+
+```{r, echo=FALSE}
+projRoot <- "C:/Code/R/DataAcqMgmt"
+
 ```{r}
-summary(cars)
+# Load the data into a data.frame
+csv_file <- file.path(projRoot, "Week10", "Data", "FY2015F_4050_Final.csv")
+csv <- read.table(csv_file, header=TRUE, sep=",")
+
+summary(csv)
 ```
 
 You can also embed plots, for example:
@@ -92,4 +110,6 @@ The raw R markdown and other code used in this comparative study can be found
 [on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week10).
 
 ### References ###
+
+"Final Fair Market Rents for the Housing Choice Voucher Program and Moderate Rehabilitation Single Room Occupancy Program Fiscal Year 2015, Docket No. FR-5807-N-03; Notice of Final Fiscal Year (FY) 2015 Fair Market Rents (FMRs)," 70 Federal Register 192 (3 October 2014), pp 59786-59792.
 
