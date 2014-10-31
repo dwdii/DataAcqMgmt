@@ -1,0 +1,9 @@
+map = function () {emit (this.state, this.pop);}
+
+reduce = function (key, values) { return Array.sum(values); }
+
+qo = { out: {replace: "state_pop"} }
+
+db.zips.mapReduce(map, reduce, qo)
+
+db.state_pop.find().pretty()
