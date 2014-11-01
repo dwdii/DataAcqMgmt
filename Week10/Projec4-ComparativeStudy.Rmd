@@ -19,6 +19,14 @@ and if compared to other years, how costs are changing over time.
 
 ### Advantages / Disadvantages ###
 
+#### R ####
+
+
+
+#### PostgreSQL ####
+
+#### MongoDB ####
+
 ### Recommendation ###
 
 ### Appendix ###
@@ -87,14 +95,31 @@ metro                binary        1 = Metro, 0 = non-metro county
 #### R Code ####
 
 ```{r, echo=FALSE}
+require(ggplot2, quietly=TRUE)
 projRoot <- "C:/Code/R/DataAcqMgmt"
+```
 
 ```{r}
 # Load the data into a data.frame
 csv_file <- file.path(projRoot, "Week10", "Data", "FY2015F_4050_Final.csv")
-csv <- read.table(csv_file, header=TRUE, sep=",")
+csv <- read.table(csv_file, header=TRUE, sep=",", fill=TRUE, stringsAsFactors=FALSE, encoding="UTF-8")
 
-summary(csv)
+# Data types and scaling
+dfFmrData <- data.frame(csv, fmr2Num=NA, pop2010Num=NA)
+dfFmrData$fmr2Num <- as.numeric(csv$fmr2)
+dfFmrData$pop2010Num <- as.numeric(csv$pop2010) / 1000000
+
+```
+
+```{r, echo=FALSE}
+g5 <- ggplot(data=dfFmrData, aes(x=pop2010Num, y=fmr2Num))
+g5 <- g5 + geom_point()
+g5 <- g5 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g5 <- g5 + labs(title="Fair Market Rent for 2 Bedroom Unit vs. 2010 Census",
+                x="2010 Census Population (Millions)",
+                y="Fair Market Rent (USD)")
+g5
+
 ```
 
 You can also embed plots, for example:
