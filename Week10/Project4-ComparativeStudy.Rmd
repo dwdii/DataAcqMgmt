@@ -21,9 +21,35 @@ and if compared to other years, how costs are changing over time.
 
 #### R ####
 
+The R runtime provides several functions for saving and loading data in a R specific format. The `save` function
+will persist one or more variables to a specified file in either ASCII or binary format, and likewise
+the `load` function will deserialize the data from a given file into the R runtime's environment.
 
+These functions are quite useful for preserving work from day to day, or sharing small data sets
+between colleagues. Mid-sized data sets could be serialized using these functions 
+as well, wherein the compress option might be a significant benefit. 
+
+Beyond the use cases described above, the RData format is unlikely to be useful 
+for larger data sets (8+ GiB). The R runtime wants to place any data loaded from
+RData files into the environment's memory space. Depending on your operating system
+some of this may be swapped to disk, but nonetheless working memory is now limited
+due to the presence of the loaded data.
+
+Simultaneous access by multiple users could also be a problem. Although once a data set
+is loaded from a given file, another user could also load the same data from the file,
+for example if the file is shared on a network drive, sharing changes presents a problem.
+The entire data set whould need to be serialized back to the file and notifications broadcast
+to collegues of then need to reload the file.
 
 #### PostgreSQL ####
+
+[PostgreSQL](http://www.postgresql.org/about/) is an open source relational database management
+system which stores data in databases and tables hosted through a separate data service typically 
+on a separate server.
+
+PostgreSQL, and relational database systems in general, are well suited for persisting data sets ranging 
+from kilobytes through gigabytes to terabytes. According to the PostgreSQL website, a given database in
+not limited in size, and a given table with a database can be as large as 32TB. 
 
 #### MongoDB ####
 
@@ -49,6 +75,9 @@ Multivariate    4,769         Business  Categorical, Integer   18         Yes
 --------------------------------------- ---------------------- ---------- ---------------
 
 #### Attribute Information ####
+
+The following table lists the data types and a brief description of the fields contained 
+in the data set used in this comparative study.
 
 -------------------------------------------------------------------------------
 Field                Data Type     Description
@@ -93,48 +122,72 @@ metro                binary        1 = Metro, 0 = non-metro county
 ---------------------------------------------------------------------
 
 #### R Code ####
+The following R code demonstrates loading the data set from CSV format, manipulating
+to ensure proper data typing
 
 ```{r, echo=FALSE}
 require(ggplot2, quietly=TRUE)
 projRoot <- "C:/Code/R/DataAcqMgmt"
+
+# Disable warnings
+options(warn=-1)  
 ```
 
 ```{r}
 # Load the data into a data.frame
 csv_file <- file.path(projRoot, "Week10", "Data", "FY2015F_4050_Final.csv")
-csv <- read.table(csv_file, header=TRUE, sep=",", fill=TRUE, stringsAsFactors=FALSE, encoding="UTF-8")
+csv <- read.table(csv_file, header=TRUE, sep=",", 
+                  fill=TRUE, stringsAsFactors=FALSE, encoding="UTF-8")
 
 # Data types and scaling
-dfFmrData <- data.frame(csv, fmr2Num=NA, pop2010Num=NA)
-dfFmrData$fmr2Num <- as.numeric(csv$fmr2)
-dfFmrData$pop2010Num <- as.numeric(csv$pop2010) / 1000000
+dfFmrData <- data.frame(csv)
+dfFmrData$fmr0 <- as.numeric(csv$fmr0)
+dfFmrData$fmr1 <- as.numeric(csv$fmr1)
+dfFmrData$fmr2 <- as.numeric(csv$fmr2)
+dfFmrData$fmr3 <- as.numeric(csv$fmr3)
+dfFmrData$fmr4 <- as.numeric(csv$fmr4)
+dfFmrData$metro <- as.numeric(csv$metro)
+dfFmrData$pop2010 <- as.numeric(csv$pop2010) / 1000000
+
+# Save to RData format
+savePath <- file.path(projRoot, "Week10", "Data", "FMR_FY2015_Final.RData")
+save(dfFmrData, file=savePath)
+
+# Load from RData format
+load(savePath)
 
 ```
 
 ```{r, echo=FALSE}
-g5 <- ggplot(data=dfFmrData, aes(x=pop2010Num, y=fmr2Num))
-g5 <- g5 + geom_point()
+g5 <- ggplot(data=dfFmrData, aes(x=pop2010))
+g5 <- g5 + geom_point(aes(y=fmr0, colour="Studio"))
+g5 <- g5 + geom_point(aes(y=fmr2, colour="2 Bedroom"))
+g5 <- g5 + geom_point(aes(y=fmr3, colour="3 Bedroom"))
+g5 <- g5 + scale_fill_hue(l=40)
 g5 <- g5 + theme(axis.text.x = element_text(angle=30, vjust=1))
-g5 <- g5 + labs(title="Fair Market Rent for 2 Bedroom Unit vs. 2010 Census",
+g5 <- g5 + guides(colour = guide_legend("Legend"))
+g5 <- g5 + labs(title="Fair Market Rent vs. 2010 Census",
                 x="2010 Census Population (Millions)",
                 y="Fair Market Rent (USD)")
 g5
 
 ```
 
-You can also embed plots, for example:
-
 ```{r, echo=FALSE}
-plot(cars)
+summary(dfFmrData)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
 ### Source Code ###
+
 The raw R markdown and other code used in this comparative study can be found 
 [on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week10).
 
 ### References ###
 
+"About." PostgreSQL:. N.p., n.d. Web. 02 Nov. 2014. <http://www.postgresql.org/about/>.
+
 "Final Fair Market Rents for the Housing Choice Voucher Program and Moderate Rehabilitation Single Room Occupancy Program Fiscal Year 2015, Docket No. FR-5807-N-03; Notice of Final Fiscal Year (FY) 2015 Fair Market Rents (FMRs)," 70 Federal Register 192 (3 October 2014), pp 59786-59792.
 
+"R: Save R Objects." R: Save R Objects. R Project, n.d. Web. 02 Nov. 2014. <http://stat.ethz.ch/R-manual/R-patched/library/base/html/save.html>.
+
+"What Are the Disadvantages of Using .Rdata Files Compared to HDF5 or NetCDF?" StackOverflow.com. Stack Exchange Inc., 25 Oct. 2011. Web. 02 Nov. 2014. <http://stackoverflow.com/a/7890475>.
