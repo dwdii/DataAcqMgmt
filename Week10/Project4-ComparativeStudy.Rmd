@@ -57,7 +57,9 @@ It could be exported to a CSV file for example, though depending on the size of 
 
 For the Fair Market Rents data set, PostgreSQL pgAdmin's import utility loaded the data from the
 CSV into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. See the Appendix - PostreSQL Code for details regarding the database design and normalization
-after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into lookup tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. 
+after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into lookup tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. In the case of the Fair Market Rent data, the normalization process revealed some missing data (a FIPS and county code) for Cumberland County, ME as shown in the following screenshot.
+
+![Missing Data for Cumberland County](Project4-FairMarketRent-MissingData.png)
 
 
 #### MongoDB ####
@@ -68,7 +70,7 @@ after the raw data was loaded. Although not strictly necessary, normalizing the 
 
 #### Data Set Description ####
  
-The specific data set used is the 2015 Fair Market Rents Country Level Data File:
+The specific data set used is the 2015 Fair Market Rent Country Level Data File:
 
 http://www.huduser.org/portal/datasets/fmr/fmr2015f/FY2015F_4050_Final.xls
 
