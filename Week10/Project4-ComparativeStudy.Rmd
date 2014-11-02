@@ -25,9 +25,7 @@ The R runtime provides several functions for saving and loading data in a R spec
 will persist one or more variables to a specified file in either ASCII or binary format, and likewise
 the `load` function will deserialize the data from a given file into the R runtime's environment.
 
-These functions are quite useful for preserving work from day to day, or sharing small data sets
-between colleagues. Mid-sized data sets could be serialized using these functions 
-as well, wherein the compress option might be a significant benefit. 
+The RData format and associated functions are quite useful importing and/or sharing small data sets, and preserving work from day to day. Mid-sized data sets (< 8GB) could be serialized using these functions as well, wherein the compress option might be a significant benefit. 
 
 Beyond the use cases described above, the RData format is unlikely to be useful 
 for larger data sets (8+ GiB). The R runtime wants to place any data loaded from
@@ -41,15 +39,26 @@ for example if the file is shared on a network drive, sharing changes presents a
 The entire data set whould need to be serialized back to the file and notifications broadcast
 to collegues of then need to reload the file.
 
+In terms of security, if an unauthorized user where to acquire an RData file, there is no inherenet
+permissions management to prevent them from unauthorized access or updates to the data. 
+
+For the Fair Market Rents data set, R's `read.table` function did not handle some of the 
+encoding used in place names even when latin1 was specified for the encoding parameter.
+
 #### PostgreSQL ####
 
 [PostgreSQL](http://www.postgresql.org/about/) is an open source relational database management
-system which stores data in databases and tables hosted through a separate data service typically 
-on a separate server.
+system (RDBMS) which stores data in databases and tables hosted through a separate data service typically on a separate server.
 
-PostgreSQL, and relational database systems in general, are well suited for persisting data sets ranging 
-from kilobytes through gigabytes to terabytes. According to the PostgreSQL website, a given database in
-not limited in size, and a given table with a database can be as large as 32TB. 
+PostgreSQL is well suited for persisting data sets ranging from kilobytes through gigabytes to terabytes. According to the PostgreSQL website, a given database in not limited in size, and a given table within a database can be as large as 32TB. Since the data is hosted on a central server, sharing across multiple users is much simpler than the RData scenario. Each user can connect and query the data independently and PostgreSQL manages the access (security) as well as any updates that might be committed.
+
+Once data is in a PostgreSQL database, sharing the data outside an organization is much more difficult.
+It could be exported to a CSV file for example, though depending on the size of the data set, this might not be feasible. Alternatively, a web application interface might be developed to enable external access while maintaining security for other data sources.
+
+For the Fair Market Rents data set, PostgreSQL pgAdmin's import utility loaded the data from the
+CSV into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. See the Appendix - PostreSQL Code for details regarding the database design and normalization
+after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into lookup tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. 
+
 
 #### MongoDB ####
 
@@ -146,6 +155,7 @@ dfFmrData$fmr1 <- as.numeric(csv$fmr1)
 dfFmrData$fmr2 <- as.numeric(csv$fmr2)
 dfFmrData$fmr3 <- as.numeric(csv$fmr3)
 dfFmrData$fmr4 <- as.numeric(csv$fmr4)
+dfFmrData$state_alpha <- as.factor(csv$state_alpha)
 dfFmrData$metro <- as.numeric(csv$metro)
 dfFmrData$pop2010 <- as.numeric(csv$pop2010) / 1000000
 
@@ -164,6 +174,7 @@ g5 <- g5 + geom_point(aes(y=fmr0, colour="Studio"))
 g5 <- g5 + geom_point(aes(y=fmr2, colour="2 Bedroom"))
 g5 <- g5 + geom_point(aes(y=fmr3, colour="3 Bedroom"))
 g5 <- g5 + scale_fill_hue(l=40)
+g5 <- g5 + ylim(0, 3000)
 g5 <- g5 + theme(axis.text.x = element_text(angle=30, vjust=1))
 g5 <- g5 + guides(colour = guide_legend("Legend"))
 g5 <- g5 + labs(title="Fair Market Rent vs. 2010 Census",
@@ -175,6 +186,126 @@ g5
 
 ```{r, echo=FALSE}
 summary(dfFmrData)
+```
+
+#### PostgreSQL Code ####
+
+The following entity relationship diagram shows the database design use used during the PostgreSQL portion of this comparative study. 
+
+![Entity Relationship Diagram](Project4-FairMarketRents-ER.png)
+
+Data was first imported into a staging table in PostgreSQL via the pgAdmin Import utility. After the
+data was imported, SQL statements were used to split the data into the appropriate tables as shown in the code segment below.
+
+``` sql
+-- Normalize state info
+INSERT INTO state (state_abbrev, code) 
+  SELECT DISTINCT state_alpha, to_number(state, '99') 
+  FROM staging ORDER BY state_alpha
+
+-- Normalize area info
+INSERT INTO area (area_name, stateid) 
+  SELECT DISTINCT areaname, s.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		ORDER BY areaname
+
+-- Normalize county info
+INSERT INTO county (county_name, code, areaid) 
+	SELECT DISTINCT countyname, to_number(county, '999'), a.id 
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha 
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		ORDER BY countyname
+
+-- Normalize county_town info
+INSERT INTO county_town (county_town_name, countyid, pop2010) 
+	SELECT DISTINCT county_town_name, c.id, to_number(pop2010, '999999999')
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		ORDER BY county_town_name
+
+INSERT INTO fmr (bedrooms, fmr, county_townid) 
+	SELECT 0, to_number(fmr0, '999999'), ct.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		LEFT JOIN county_town ct ON ct.county_town_name = st.county_town_name 
+      AND ct.countyid = c.id
+
+INSERT INTO fmr (bedrooms, fmr, county_townid) 
+	SELECT 1, to_number(fmr1, '999999'), ct.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		LEFT JOIN county_town ct ON ct.county_town_name = st.county_town_name 
+      AND ct.countyid = c.id		
+
+INSERT INTO fmr (bedrooms, fmr, county_townid) 
+	SELECT 2, to_number(fmr2, '999999'), ct.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		LEFT JOIN county_town ct ON ct.county_town_name = st.county_town_name 
+      AND ct.countyid = c.id
+
+INSERT INTO fmr (bedrooms, fmr, county_townid) 
+	SELECT 3, to_number(fmr3, '999999'), ct.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		LEFT JOIN county_town ct ON ct.county_town_name = st.county_town_name 
+      AND ct.countyid = c.id
+
+INSERT INTO fmr (bedrooms, fmr, county_townid) 
+	SELECT 4, to_number(fmr4, '999999'), ct.id
+		FROM staging st
+		LEFT JOIN state s ON s.state_abbrev = st.state_alpha
+		LEFT JOIN area a ON a.area_name = st.areaname AND a.stateid = s.id
+		LEFT JOIN county c ON c.county_name = st.countyname AND c.areaid = a.id
+		LEFT JOIN county_town ct ON ct.county_town_name = st.county_town_name 
+      AND ct.countyid = c.id
+```
+
+Using a query such as the following, R can be used to query the PostgreSQL data and produce a similar
+chart as in the R code shown previously.
+
+```{r}
+require("RPostgreSQL")
+
+# PostgreSQL - connect
+drv <- dbDriver("PostgreSQL")
+con <- dbConnect(drv,user="postgres",password="a",dbname="proj4")
+
+# COALESCE(pv1.pageviews, 0) 
+sQuery <- "SELECT ct.pop2010 / 1000000.0 AS pop2010, 
+                  fmr0.fmr AS fmr0, 
+                  fmr2.fmr AS fmr2, 
+                  fmr3.fmr AS fmr3 FROM  county_town ct 
+  LEFT JOIN fmr fmr0 ON fmr0.county_townid = ct.id AND fmr0.bedrooms = 0
+  LEFT JOIN fmr fmr2 ON fmr2.county_townid = ct.id AND fmr2.bedrooms = 2
+  LEFT JOIN fmr fmr3 ON fmr3.county_townid = ct.id AND fmr3.bedrooms = 3" 
+res <- dbGetQuery(con, sQuery)
+
+g6 <- ggplot(data=res, aes(x=pop2010))
+g6 <- g6 + geom_point(aes(y=fmr0, colour="Studio"))
+g6 <- g6 + geom_point(aes(y=fmr2, colour="2 Bedroom"))
+g6 <- g6 + geom_point(aes(y=fmr3, colour="3 Bedroom"))
+g6 <- g6 + scale_fill_hue(l=40)
+g6 <- g6 + ylim(0, 3000)
+g6 <- g6 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g6 <- g6 + guides(colour = guide_legend("Legend"))
+g6 <- g6 + labs(title="Fair Market Rent vs. 2010 Census (via PostgreSQL)",
+                x="2010 Census Population (Millions)",
+                y="Fair Market Rent (USD)")
+g6
+
 ```
 
 ### Source Code ###
