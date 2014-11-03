@@ -53,7 +53,7 @@ PostgreSQL is well suited for persisting data sets ranging from kilobytes throug
 Once data is in a PostgreSQL database, sharing the data outside an organization is much more difficult.
 It could be exported to a CSV file for example, though depending on the size of the data set, this might not be feasible. Alternatively, a web application interface might be developed to enable external access while maintaining security for other data sources.
 
-For the Fair Market Rents data set, PostgreSQL pgAdmin's import utility loaded the data from the
+For the Fair Market Rent data set, PostgreSQL pgAdmin's import utility loaded the data from the
 CSV into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. See the Appendix - PostreSQL Code for details regarding the database design and normalization
 after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into look-up tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. In the case of the Fair Market Rent data, the normalization process revealed some missing data (a FIPS and county code) for Cumberland County, ME as shown in the following screenshot.
 
@@ -61,6 +61,10 @@ after the raw data was loaded. Although not strictly necessary, normalizing the 
 
 
 #### MongoDB ####
+
+For the Faiir Market Rent data set, `mongoimport.exe` was used for data import. As mentioned previously, the data was in a Latin 1 encoding which MongoDB doesn't support. The utility did the best it could and imported all rows which didn't have Latin 1 specific encoding. The data set was
+reimported after converting it to UTF-8 and `mongoimport` performed as expected and imported all rows without issue.
+
 
 ### Recommendation ###
 
