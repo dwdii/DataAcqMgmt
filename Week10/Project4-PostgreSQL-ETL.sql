@@ -91,6 +91,31 @@ SELECT * FROM fmr f
 	LEFT JOIN state s ON s.id = a.stateid
 	WHERE c.county_name LIKE 'Brevard%'	
 
+SELECT ct.county_town_name, ct.pop2010, fmr0.fmr AS fmr0, fmr2.fmr AS fmr2, fmr3.fmr AS fmr3 FROM  county_town ct 
+	LEFT JOIN fmr fmr0 ON fmr0.county_townid = ct.id AND fmr0.bedrooms = 0
+	LEFT JOIN fmr fmr2 ON fmr2.county_townid = ct.id AND fmr2.bedrooms = 2
+	LEFT JOIN fmr fmr3 ON fmr3.county_townid = ct.id AND fmr3.bedrooms = 3
+	ORDER BY fmr0.fmr ASC
+
+	SELECT county_town_name, countyid FROM county_town GROUP BY county_town_name, countyid HAVING COUNT(*) > 1
+
+SELECT county_name, areaid, COUNT(*) FROM county GROUP BY county_name, areaid HAVING COUNT(*) > 1
+SELECT * FROM county c
+	LEFT JOIN area a ON a.id = c.areaid
+	LEFT JOIN state s ON s.id = a.stateid
+	WHERE county_name = 'Cumberland County' AND areaid = 1924
+
+SELECT * FROM county WHERE code IS NULL
+
+SELECT * FROM county_town WHERE countyid = 724
+SELECT * FROM area WHERE stateid IS NULL
+SELECT * FROM county WHERE areaid IS NULL
+SELECT * FROM county_town WHERE countyid IS NULL
+SELECT * FROM fmr WHERE county_townid IS NULL
+
+SELECT COUNT(*) FROM fmr
+
+
 SELECT * FROM staging WHERE state_alpha = 'PR'
 --DELETE FROM staging
 
