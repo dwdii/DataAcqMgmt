@@ -8,38 +8,36 @@ output: pdf_document
 ### Data Set Use Case ###
 
 The data set used in this comparative study was obtained from the U.S. Department of Housing and 
-Urban Development (HUD) contains fair market rent (FMR) data points for counties and 
+Urban Development (HUD). It contains fair market rent (FMR) data points for counties and 
 metropolitan statisitcal areas through-out the United States of America. The FMR data points
 are required to be published by as part of Section 8 of the United States Housing Act of 1937.
 
-The FMR data is used by programs operating under Section 8 including the Housing Choice Voucher,
+FMR data is used by programs operating under Section 8 including the Housing Choice Voucher,
 the Moderate Rehabilitation, and the project-based voucher programs. External to these programs,
-this data set can be used to better understand differences in housing costs around the country,
+this data set can be used to better understand differences in housing costs around the United States,
 and if compared to other years, how costs are changing over time.
 
 ### Advantages / Disadvantages ###
 
 #### R ####
 
-The R runtime provides several functions for saving and loading data in a R specific format. The `save` function
-will persist one or more variables to a specified file in either ASCII or binary format, and likewise
-the `load` function will deserialize the data from a given file into the R runtime's environment.
+The R runtime provides several functions for saving and loading data in the RData format. The `save` function will persist one or more variables to a specified file in either ASCII or binary format, and likewise the `load` function will deserialize the data from a given file into the R runtime's environment.
 
-The RData format and associated functions are quite useful importing and/or sharing small data sets, and preserving work from day to day. Mid-sized data sets (< 8GB) could be serialized using these functions as well, wherein the compress option might be a significant benefit. 
+The RData format and associated functions are quite useful for importing and/or sharing small data sets, as well as preserving work from day to day. Mid-sized data sets (< 8GB) could be serialized using these functions as well, wherein the `compress` option might be a significant benefit. 
 
 Beyond the use cases described above, the RData format is unlikely to be useful 
-for larger data sets (8+ GiB). The R runtime wants to place any data loaded from
+for larger data sets (8+ GB). The R runtime wants to place any data loaded from
 RData files into the environment's memory space. Depending on your operating system
 some of this may be swapped to disk, but nonetheless working memory is now limited
 due to the presence of the loaded data.
 
-Simultaneous access by multiple users could also be a problem. Although once a data set
+Simultaneous access by multiple users could also be a problem. once a data set
 is loaded from a given file, another user could also load the same data from the file,
-for example if the file is shared on a network drive, sharing changes presents a problem.
+for example if the file is shared on a network drive. Sharing changes presents a problem though.
 The entire data set whould need to be serialized back to the file and notifications broadcast
-to collegues of then need to reload the file.
+to collegues of the need to reload the file.
 
-In terms of security, if an unauthorized user where to acquire an RData file, there is no inherenet
+In terms of security, if an unauthorized user where to acquire an RData file, there is no inherent
 permissions management to prevent them from unauthorized access or updates to the data. 
 
 For the Fair Market Rents data set, R's `read.table` function did not handle some of the 
@@ -57,7 +55,7 @@ It could be exported to a CSV file for example, though depending on the size of 
 
 For the Fair Market Rents data set, PostgreSQL pgAdmin's import utility loaded the data from the
 CSV into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. See the Appendix - PostreSQL Code for details regarding the database design and normalization
-after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into lookup tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. In the case of the Fair Market Rent data, the normalization process revealed some missing data (a FIPS and county code) for Cumberland County, ME as shown in the following screenshot.
+after the raw data was loaded. Although not strictly necessary, normalizing the data, such as state and county names, into look-up tables is considered best practice in RDBMS database design. Normalization requires several extra steps that might not be necessary for all data sets. In the case of the Fair Market Rent data, the normalization process revealed some missing data (a FIPS and county code) for Cumberland County, ME as shown in the following screenshot.
 
 ![Missing Data for Cumberland County](Project4-FairMarketRent-MissingData.png)
 
@@ -120,7 +118,7 @@ Metro_code           string        METROxxxxxxMxxxxx for metropolitan areas and
 
 Areaname             string        Area name
  
-county_town_name     string        ???
+county_town_name     string        Locality name to which the pop2010 field is relevant
 
 pop2010              integer       Population of locality from 2010 Census
 
@@ -133,8 +131,8 @@ metro                binary        1 = Metro, 0 = non-metro county
 ---------------------------------------------------------------------
 
 #### R Code ####
-The following R code demonstrates loading the data set from CSV format, manipulating
-to ensure proper data typing
+The following R code demonstrates loading the data set from CSV format, and manipulating
+to ensure proper data typing.
 
 ```{r, echo=FALSE}
 require(ggplot2, quietly=TRUE)
@@ -192,7 +190,7 @@ summary(dfFmrData)
 
 #### PostgreSQL Code ####
 
-The following entity relationship diagram shows the database design use used during the PostgreSQL portion of this comparative study. 
+The following entity relationship diagram shows the database design created during the PostgreSQL portion of this comparative study. 
 
 ![Entity Relationship Diagram](Project4-FairMarketRents-ER.png)
 
@@ -285,7 +283,7 @@ require("RPostgreSQL")
 drv <- dbDriver("PostgreSQL")
 con <- dbConnect(drv,user="postgres",password="a",dbname="proj4")
 
-# COALESCE(pv1.pageviews, 0) 
+# Query the Postgres data tables
 sQuery <- "SELECT ct.pop2010 / 1000000.0 AS pop2010, 
                   fmr0.fmr AS fmr0, 
                   fmr2.fmr AS fmr2, 
