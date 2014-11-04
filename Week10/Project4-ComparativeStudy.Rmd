@@ -1,20 +1,20 @@
 ---
 title: 'Comparative Study: R, PostgreSQL, MongoDB'
 author: "Daniel Dittenhafer"
-date: "Thursday, October 30, 2014"
+date: "Monday, November 3, 2014"
 output: pdf_document
 ---
 
 ### Introduction ###
 
-This study compares the data storage and querying capability of R, PostgreSQL and MongoDB using a common data set as described in the next section. Commentary regarding advantages and disadvantages, as well as specific experiences with the scenario data set are presented. Finally, a recommended technology is put forward with supporting points. An appendix including comparable sample code is provided as well.
+This study compares the basic data storage and querying capability of R, PostgreSQL and MongoDB using a common data set as described in the next section. Commentary regarding advantages and disadvantages, as well as specific experiences with the scenario data set are presented. Finally, a recommended technology is put forward with supporting points. An appendix including comparable sample code is provided as well.
 
 ### Data Set Use Case ###
 
 The data set used in this comparative study was obtained from the U.S. Department of Housing and 
 Urban Development (HUD). It contains fair market rent (FMR) data points for counties and 
-metropolitan statisitcal areas through-out the United States of America. The FMR data points
-are required to be published by as part of Section 8 of the United States Housing Act of 1937.
+metropolitan statistical areas through-out the United States of America. The FMR data points
+are required to be published by HUD as part of Section 8 of the United States Housing Act of 1937.
 
 FMR data is used by programs operating under Section 8 including the Housing Choice Voucher,
 the Moderate Rehabilitation, and the project-based voucher programs. External to these programs,
@@ -47,7 +47,7 @@ permissions management to prevent them from accessing and/or updating the data.
 For the Fair Market Rents data set, R's `read.table` function did not handle some of the 
 encoding used in place names even when both the `latin1` and `UTF-8` were specified for the encoding parameter.
 
-A portion of the data was able to be loaded, and once loaded R's querying and data analytic capabilities shined.
+A portion of the data was able to be loaded. Once loaded, R's querying and data analytic capabilities shined.
 
 #### PostgreSQL ####
 
@@ -60,8 +60,7 @@ PostgreSQL is well suited for persisting data sets ranging from kilobytes to ter
 Once data is in a PostgreSQL database, sharing the data within an organization is very straight forward. Any user with permission can connect and query from a wide range of client applications. Sharing the data outside an organization is much more difficult.
 The data could be exported to a CSV file for example, though depending on the size of the data set, this might not be feasible. Alternatively, a web application interface might be developed to enable external access while maintaining security for other data sources.
 
-For the Fair Market Rent data set, PostgreSQL pgAdmin's import utility was used to load the data from the
-CSV into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. 
+For the Fair Market Rent data set, PostgreSQL pgAdmin's import utility was used to load the data from the CSV file into a staging table very smoothly, including the handling of latin1 encoded characters, without issue. 
 The staging table had to be predefined and created within a pre-created database before the import utility was used.
 See the Appendix - PostreSQL Code section for details regarding the database design and normalization
 after the raw data was loaded. 
@@ -81,7 +80,8 @@ Like PostgreSQL, MongoDB provides security mechanisms for authenticating and aut
 users. Also like PostgreSQL and R, MongoDB supports querying across all fields and producing
 aggregations from the data (many NoSQL solutions, such as HBASE, don't support this). 
 
-As part of the schemaless design of MongoDB, normalization is typically not applied to raw data. In MongoDB, references between documents are mostly manual, though there is a concept of DBRef which appears to offer similar functionality as traditional RDBMS foreign key relationships. Some data scenarios, including our Fair Market Rent scenario, don't absolutely require normalization, but others benefit from the data typing and relationship enforcement that an RDBMS provides.
+As part of the schemaless design of MongoDB, normalization is typically not applied to raw data. In MongoDB, references between documents are mostly manual, though there is a concept of
+[DBRef](http://docs.mongodb.org/manual/reference/database-references/) which appears to offer similar functionality as traditional RDBMS foreign key relationships. Some data scenarios, including our Fair Market Rent scenario, don't absolutely require normalization, but others benefit from the data typing and relationship enforcement that an RDBMS provides.
 
 For the Fair Market Rent data set, the `mongoimport.exe` utility was used for data import. 
 As mentioned previously, the data was in a Latin 1 encoding, which MongoDB doesn't support. 
@@ -93,7 +93,7 @@ performed as expected and imported all rows without issue.
 ### Recommendation ###
 
 For smaller data sets, particularlly those that load into R cleanly using the `read.table` function, 
-RData seems to be the best option for storing and quickly reloading data. With that said, based on the experiences with the Fair Market Rent data set and encoding, MongoDB is the clear stand-out for easy of import and the power it offers for querying and sharing data within a organization.
+RData seems to be the best option for storing and quickly reloading data. With that said, based on the experiences with the Fair Market Rent data set and character encoding, MongoDB is the clear stand-out for its ease of import, the power it offers for querying and sharing data within a organization, and its ability to scale out as future data needs require.
 
 ### Appendix ###
 
@@ -162,8 +162,8 @@ metro                binary        1 = Metro, 0 = non-metro county
 ---------------------------------------------------------------------
 
 #### R Code ####
-The following R code demonstrates loading the data set from CSV format, and manipulating
-to ensure proper data typing.
+The following R code demonstrates loading the data set from CSV format, manipulating
+to ensure proper data typing, and serializing to/from the RData format.
 
 ```{r, echo=FALSE}
 require(ggplot2, quietly=TRUE)
@@ -175,9 +175,9 @@ options(warn=-1)
 
 ```{r}
 # Load the data into a data.frame
-csv_file <- file.path(projRoot, "Week10", "Data", "FY2015F_4050_Final-utf8.csv")
+csv_file <- file.path(projRoot, "Week10", "Data", "FY2015F_4050_Final.csv")
 csv <- read.table(csv_file, header=TRUE, sep=",", 
-                  fill=TRUE, stringsAsFactors=FALSE, encoding="UTF-8")
+                  fill=TRUE, stringsAsFactors=FALSE, encoding="latin1")
 
 # Data types and scaling
 dfFmrData <- data.frame(csv)
@@ -341,7 +341,31 @@ g6
 
 #### MongoDB Code ####
 
-For simplicity, the data was left as it was after importing via `mongoimport`. 
+For simplicity, the data was left as it was after importing via `mongoimport`. An example JSON document is shown below:
+
+``` json
+{
+        "_id" : ObjectId("5457be09fe0613e0b0d43388"),
+        "fips2000" : NumberLong("5601399999"),
+        "fips2010" : NumberLong("5601399999"),
+        "fmr2" : 712,
+        "fmr0" : 516,
+        "fmr1" : 526,
+        "fmr3" : 967,
+        "fmr4" : 971,
+        "county" : 13,
+        "State" : 56,
+        "CouSub" : 99999,
+        "countyname" : "Fremont County",
+        "Metro_code" : "NCNTY56013N56013",
+        "Areaname" : "Fremont County, WY",
+        "county_town_name" : "Fremont County",
+        "pop2010" : 40123,
+        "state_alpha" : "WY",
+        "fmr_type" : 40,
+        "metro" : 0
+}
+```
 
 MongoDB is accessible from many clients including R. The following code demonstrates accessing the Fair Market Rent data via the rmongodb package and producing the familiar Rent vs. Population chart as in
 the previous examples.
