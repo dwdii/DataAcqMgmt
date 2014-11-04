@@ -45,7 +45,7 @@ In terms of security, if an unauthorized user were to acquire an RData file, the
 permissions management to prevent them from accessing and/or updating the data. 
 
 For the Fair Market Rents data set, R's `read.table` function did not handle some of the 
-encoding used in place names even when both the `latin1` and `UTF-8` were specified for the encoding parameter.
+encoding used in place names even when both the `latin1` and `UTF-8` options were specified for the encoding parameter.
 
 A portion of the data was able to be loaded. Once loaded, R's querying and data analytic capabilities shined.
 
