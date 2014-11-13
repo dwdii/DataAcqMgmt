@@ -29,3 +29,7 @@ CREATE TABLE housing
 SELECT * FROM courses
 
 SELECT DISTINCT coursenumber, coursename FROM courses
+
+SELECT DISTINCT dormitory from housing
+
+SELECT * FROM courses WHERE grade != 'IP'
