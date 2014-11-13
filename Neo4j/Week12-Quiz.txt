@@ -1,0 +1,65 @@
+# 
+# Author: Daniel Dittenhafer
+#
+# Created: Nov 12, 2014
+#
+# Description: Answers to Week 12 Quiz
+#
+
+1. Code to read the csv files into Neo4j.
+
+-- I first imported the CSV files into PostgreSQL (raw, no normalization) 
+-- and used SQL to query fordistinct entries such as courses (id, name),
+-- dormitories (name). After doing so I realized I could accomplish
+-- this with the Cypher MERGE clause. The SQL was used to quickly 
+-- query for IP vs non-IP courses and separate CSV files were created
+-- with this data.
+
+-- The following Cypher statement loads all students and dormitory 
+-- nodes, and creates the relationship between the students and the 
+-- dorm they are housed in.
+
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\week-12-quiz-data-students-and-housing.csv" AS csvLine 
+CREATE (student:Student {firstname: csvLine.GivenName, lastname: csvLine.Surname, id: csvLine.ID, gender: csvLine.Gender, address: csvLine.StreetAddress, city: csvLine.City, state: csvLine.State, zipcode: csvLine.ZipCode, phone: csvLine.TelephoneNumber }) 
+MERGE (dormitory:Dormitory { name: csvLine.Dormitory}) 
+CREATE (student)-[:Housed {room: csvLine.Room }]->(dormitory)
+
+-- The following two Cyher statements load the courses (in progress, 
+-- and completed, respectively) and create the relationship with the
+-- students as appropriate.
+
+LOAD CSV WITH HEADERS FROM "file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\courses-inprogress.csv" AS csvLine
+MATCH (student:Student {id: csvLine.ID})
+MERGE (course:Course { department: csvLine.CourseDept, number: csvLine.CourseNumber, title: csvLine.CourseName })
+CREATE (student)-[:Enrolled {section: csvLine.Section, instructor: csvLine.Instructor, grade: csvLine.Grade}]->(course)
+
+LOAD CSV WITH HEADERS FROM "file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\courses-completed.csv" AS csvLine
+MATCH (student:Student {id: csvLine.ID})
+MERGE (course:Course { department: csvLine.CourseDept, number: csvLine.CourseNumber, title: csvLine.CourseName })
+CREATE (student)-[:Completed {section: csvLine.Section, instructor: csvLine.Instructor, grade: csvLine.Grade}]->(course)
+
+2. Graph vs SQL for this task?
+
+For the traditional school data use case, it seems to me that SQL is 
+still a good solution. With that said, the relationships certainly 
+stand-out using Neo4j and a graph database solution could be used for
+other use cases such as forecasting illness outbreaks and their effects 
+on various class attendance for example. In the end there is still 
+normalization occuring and given that Neo4j supports ACID transactions 
+I can see a future school management software solution using this
+technology under the covers.
+
+3. Cypher query to find roommates of Richard Kowalski:
+
+MATCH (rm:Student)-[h:Housed]->(dorm:Dormitory)
+MATCH (rk:Student {firstname: "Richard", lastname: "Kowalski"})-[rmh:Housed]->(dorm)
+WHERE h.room = rmh.room AND rm <> rk
+RETURN rm
+
+4. Find and update Richard Kowalski's relationship and grade for Math 120:
+
+MATCH (rk:Student {id:"19457"})-[e:Enrolled]->(course:Course {number: "120", title: "Finite Mathematics"})
+CREATE (rk)-[c:Completed {section: e.section, instructor: e.instructor, grade: "B"}]->(course)
+DELETE e
+RETURN rk,c,course
