@@ -28,7 +28,16 @@ MATCH (pr:Product {id: csv.Product})
 MATCH (fl:Flight {number: csv.FlightNum})
 MERGE (pc:Purchaser {name: csv.CardholderName, cardType: csv.CardType, last4digitsCC: csv.Last4digitsCC }) 
 MERGE (pr)-[:ProductAvailable]->(fl)
-MERGE (pc)-[p:Purchase]->(fl) ON CREATE SET p.TV = 0, p.Connectivity = 0
+MERGE (pc)-[p:Purchase]->(fl) 
+ON CREATE 
+  SET p.TV = CASE WHEN pr.id = "TV"
+    THEN 1
+  	ELSE 0
+  	END,
+  p.Connectivity = CASE WHEN pr.id = "Connectivity"
+    THEN 1
+  	ELSE 0
+  	END
 ON MATCH 
 SET p.TV = CASE WHEN pr.id = "TV"
 	THEN p.TV + 1
@@ -48,10 +57,12 @@ MATCH (pr:Product {id: "Connectivity"})-[ruo:User_Of]-(u) RETURN u,pr
 -- Who are the TV Users?
 MATCH (pr:Product {id: "TV"})-[ruo:User_Of]-(u) RETURN u,pr
 
--- Who are the Connectivity Users who also use TV?
+-- Who are the Connectivity Users who have also used TV?
 MATCH (pr:Product {id: "Connectivity"})-[ruoC:User_Of]-(u)-[rouT:User_Of]-(prTV:Product {id: "TV"}) RETURN u,pr,prTV
 
+-- Who are the users who have purchased Connectivity and TV on the same Flight?
 MATCH (pr:Product {id: "Connectivity"})-[ruoC:User_Of]-(u)-[rouT:User_Of]-(prTV:Product {id: "TV"})
-MATCH (u)-[Purchase {Product: "Connectivity"}]-(fl:Flight)-[Purchase {Product: "TV"}]-(u)
-return u,pr,prTV,fl
+MATCH (u)-[p:Purchase]-(fl:Flight)
+  WHERE p.Connectivity > 0 AND p.TV > 0
+RETURN u,pr,fl,prTV
 
