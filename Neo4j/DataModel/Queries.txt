@@ -66,3 +66,10 @@ MATCH (u)-[p:Purchase]-(fl:Flight)
   WHERE p.Connectivity > 0 AND p.TV > 0
 RETURN u,pr,fl,prTV
 
+-- What flights and airports do are related to purchases of both connectivity and TV on the same Flight?
+MATCH (pr:Product {id: "Connectivity"})-[ruoC:User_Of]-(u)-[rouT:User_Of]-(prTV:Product {id: "TV"})
+MATCH (u)-[p:Purchase]-(fl:Flight)-[d:Departed]-(o:Airport)
+  WHERE p.Connectivity > 0 AND p.TV > 0
+MATCH (u)-[p]-(fl)-[a:Arrived]-(ar:Airport)
+  WHERE p.Connectivity > 0 AND p.TV > 0
+RETURN fl,o,ar
