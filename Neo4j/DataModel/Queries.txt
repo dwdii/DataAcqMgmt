@@ -1,0 +1,50 @@
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Aircraft.csv" AS csv
+MERGE (ac:Aircraft {id: csv.TailNumber }) 
+
+
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Airports.csv" AS csv
+MERGE (ap:Airport {id: csv.ICAO }) 
+
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Products.csv" AS csv
+MERGE (ap:Product {id: csv.Name }) 
+
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Flights.csv" AS csv
+MERGE (fl:Flight {number: csv.Number, Takeoff: csv.TakeoffDateTime }) 
+
+LOAD CSV WITH HEADERS FROM 
+"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Purchases.csv" AS csv
+MATCH (pr:Product {id: csv.Product})
+MATCH (fl:Flight {number: csv.FlightNum})
+MERGE (pc:Purchaser {name: csv.CardholderName, cardType: csv.CardType, last4digitsCC: csv.Last4digitsCC }) 
+MERGE (pr)-[:ProductAvailable]->(fl)
+MERGE (pc)-[p:Purchase]->(fl) ON CREATE SET p.TV = 0, p.Connectivity = 0
+ON MATCH 
+SET p.TV = CASE WHEN pr.id = "TV"
+	THEN p.TV + 1
+	ELSE p.TV
+	END,
+p.Connectivity = CASE WHEN pr.id = "Connectivity"
+        THEN p.Connectivity + 1
+	ELSE p.Connectivity
+	END
+MERGE (pc)-[:User_Of]->(pr)
+
+--match (n)-[r]-() delete n,r
+
+-- Who are the Connectivity Users?
+MATCH (pr:Product {id: "Connectivity"})-[ruo:User_Of]-(u) RETURN u,pr
+
+-- Who are the TV Users?
+MATCH (pr:Product {id: "TV"})-[ruo:User_Of]-(u) RETURN u,pr
+
+-- Who are the Connectivity Users who also use TV?
+MATCH (pr:Product {id: "Connectivity"})-[ruoC:User_Of]-(u)-[rouT:User_Of]-(prTV:Product {id: "TV"}) RETURN u,pr,prTV
+
+MATCH (pr:Product {id: "Connectivity"})-[ruoC:User_Of]-(u)-[rouT:User_Of]-(prTV:Product {id: "TV"})
+MATCH (u)-[Purchase {Product: "Connectivity"}]-(fl:Flight)-[Purchase {Product: "TV"}]-(u)
+return u,pr,prTV,fl
+

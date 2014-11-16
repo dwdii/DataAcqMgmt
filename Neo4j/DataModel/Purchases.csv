@@ -1,0 +1,12 @@
+CardholderName,CardType,Last4digitsCC,Product,FlightNum
+Jones/Fred,VISA,1111,Connectivity,987
+Smith/Rose,MC,2222,TV,987
+Jones/Fred,VISA,1111,TV,987
+Chin/Eric,AMEX,4444,Connectivity,987
+Florenz/Al,VISA,1234,Connectivity,678
+Miles/Davis,MC,2847,TV,678
+Porter/Michael,VISA,5283,TV,678
+Chin/Eric,AMEX,4444,Connectivity,720
+Marcy/Harold,AMEX,6752,Connectivity,832
+Smith/Rose,MC,2222,TV,832
+Miles/Davis,MC,2847,TV,764
