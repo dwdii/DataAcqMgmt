@@ -1,22 +1,29 @@
 LOAD CSV WITH HEADERS FROM 
-"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Aircraft.csv" AS csv
+"file:C:\\Code\\R\\DataAcqMgmt\\Neo4j\\DataModel\\Aircraft.csv" AS csv
 MERGE (ac:Aircraft {id: csv.TailNumber }) 
 
 
 LOAD CSV WITH HEADERS FROM 
-"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Airports.csv" AS csv
+"file:C:\\Code\\R\\DataAcqMgmt\\Neo4j\\DataModel\\Airports.csv" AS csv
 MERGE (ap:Airport {id: csv.ICAO }) 
 
 LOAD CSV WITH HEADERS FROM 
-"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Products.csv" AS csv
+"file:C:\\Code\\R\\DataAcqMgmt\\Neo4j\\DataModel\\Products.csv" AS csv
 MERGE (ap:Product {id: csv.Name }) 
 
 LOAD CSV WITH HEADERS FROM 
-"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Flights.csv" AS csv
+"file:C:\\Code\\R\\DataAcqMgmt\\Neo4j\\DataModel\\Flights.csv" AS csv
+MATCH (ac:Aircraft {id: csv.Aircraft})
+MATCH (o:Airport {id:csv.Origin})
+MATCH (d:Airport {id:csv.Destination})
 MERGE (fl:Flight {number: csv.Number, Takeoff: csv.TakeoffDateTime }) 
+MERGE (ac)-[:Flew]->(fl)
+MERGE (fl)-[:Departed]->(o)
+MERGE (fl)-[:Arrived]->(d)
+
 
 LOAD CSV WITH HEADERS FROM 
-"file:C:\\Users\\Dan\\SkyDrive\\GradSchool\\IS607-DataAcqMgmt\\Week12\\DataModel\\Purchases.csv" AS csv
+"file:C:\\Code\\R\\DataAcqMgmt\\Neo4j\\DataModel\\Purchases.csv" AS csv
 MATCH (pr:Product {id: csv.Product})
 MATCH (fl:Flight {number: csv.FlightNum})
 MERGE (pc:Purchaser {name: csv.CardholderName, cardType: csv.CardType, last4digitsCC: csv.Last4digitsCC }) 
