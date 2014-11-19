@@ -5,7 +5,7 @@ AS $$
 
     DECLARE theid INT;
     BEGIN
-	    SELECT  ID FROM ObjectList WHERE name = theName INTO theid;
+	    SELECT  ID FROM ObjectList WHERE name = theName INTO theid LIMIT 1;
 	    IF theid IS NOT NULL THEN
 	         UPDATE ObjectList SET description = theDescription WHERE ID = theid;
 	    ELSE
