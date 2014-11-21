@@ -16,8 +16,18 @@ bref <- c(
              title="Getting Started with doParallel and foreach", 
              author=as.person("Steve Weston, Rich Calaway"),
              year="2014",
-             url="http://cran.r-project.org/web/packages/doParallel/vignettes/gettingstartedParallel.pdf")
-    )
+             url="http://cran.r-project.org/web/packages/doParallel/vignettes/gettingstartedParallel.pdf"),
+    
+    bibentry(bibtype="Misc", 
+             title="Split a vector into three vectors of unequal length in R", 
+             author=as.person("Simon O'Hanlon"),
+             year="2013",
+             url="http://stackoverflow.com/a/18406749"),
+
+    bibentry(bibtype="Misc", 
+             title="package foreach, version 1.4.1", 
+             url="http://www.inside-r.org/packages/cran/foreach/docs/foreach")
+  )
 
 ```
 
@@ -26,26 +36,27 @@ This performance study will compare a simple task, the sum of a vector of intege
 ```{r}
 require(microbenchmark, quietly=TRUE)
 require(doParallel, quietly=TRUE)
+require(ggplot2)
 ```
 
 I am running on a 4 core laptop, so I will use 3 cores for this test, leaving one for keeping my machine reasonably responsive. 
 
 ```{r}
 registerDoParallel(cores=3) 
+
+print(parallel::detectCores())
 ```
 
-The for loop to be used in this study is wrapped in the function `forLoopFunc` and is defined as follows:
+The for loop to be used in this study is wrapped in the function `forLoopSum` and is defined as follows:
 
 ```{r}
-forLoopFunc <- function(x)
+forLoopSum <- function(x)
 {
   sum <- 0
-  
   for( a in x){
     sum <- sum + a
   }
-  
-  return (a)
+  return (sum)
 }
 ```
 
@@ -58,23 +69,47 @@ citep(bref[1])
 .
 
 ```{r}
-parallelForLoopFun <- function(x) {
-    foreach(i=1:3) %dopar% sqrt(i)
+parallelForLoopSum <- function(x) {
+  
+  items <- length(x)
+  batches <- parallel::detectCores()
+  batchSize <- items
+  batchSets <- split(x, sample(batches, items, replace=TRUE))
+  
+  finalSum <- foreach(b=iter(batchSets, by='row'), .combine="+") %dopar% sum(b)
+  
+  return (finalSum)
 }
 
-
+a <- sample(1:20, 100, replace=TRUE)
+parallelForLoopSum(a)
 ```
 
 ```{r}
-setSize <- 10 ^ c(1, 2, 3) #, 4, 5, 6, 7, 8)
+setSize <- 10 ^ c(1, 2, 3, 4, 5, 6, 7, 8)
 
 for(s in setSize) {
   a <- sample(1:20, s, replace=TRUE)
   
-  results <- microbenchmark::microbenchmark(forLoopFunc(a), sum(a), times=5, unit="ms")
+  # Validate
+  checkSum <- sum(a)
+  print(checkSum)
+  print(forLoopSum(a))
+  #stopifnot(identical(forLoopSum(a), checkSum))
+  stopifnot(identical(parallelForLoopSum(a), checkSum))
+  
+  # Run performance test
+  results <- microbenchmark::microbenchmark(forLoopSum(a), 
+                                            sum(a), 
+                                            parallelForLoopSum(a), 
+                                            times=10, unit="ms")
   print(results)
+  
+  class(results)
+  
+  gp <- autoplot(results)
+  gp
 }
-
 
 print(setSize)
 
@@ -82,6 +117,11 @@ print(setSize)
 # results <- microbenchmark::microbenchmark(mean(a), times=1)
 
 ```
+
+```{r, echo=FALSE}
+gp
+```
+
 You can also embed plots, for example:
 
 ```{r, echo=FALSE}
@@ -92,8 +132,6 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 #### References ####
 ```{r, echo=FALSE}
-
-
 record_as_cited(bref)
 
 ```{r, results='asis', echo=FALSE}
