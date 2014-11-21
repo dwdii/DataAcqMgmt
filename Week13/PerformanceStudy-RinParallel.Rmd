@@ -11,24 +11,27 @@ require(RefManageR, quietly=TRUE)
 
 cleanbib()
 
-bref <- c(
-    bibentry(bibtype="Misc", 
+cite_options(citation_format="text")
+
+bibDoPara <- bibentry(bibtype="Misc", 
              title="Getting Started with doParallel and foreach", 
              author=as.person("Steve Weston, Rich Calaway"),
              year="2014",
-             url="http://cran.r-project.org/web/packages/doParallel/vignettes/gettingstartedParallel.pdf"),
-    
-    bibentry(bibtype="Misc", 
+             url="http://cran.r-project.org/web/packages/doParallel/vignettes/gettingstartedParallel.pdf")
+             
+bibSplitSO <- bibentry(bibtype="Misc", 
              title="Split a vector into three vectors of unequal length in R", 
              author=as.person("Simon O'Hanlon"),
              year="2013",
-             url="http://stackoverflow.com/a/18406749"),
+             url="http://stackoverflow.com/a/18406749")
 
-    bibentry(bibtype="Misc", 
+bibRforeach <- bibentry(bibtype="Misc", 
              title="package foreach, version 1.4.1", 
+             author="R Core Team",
+             organization="R Foundation for Statistical Computing",
              url="http://www.inside-r.org/packages/cran/foreach/docs/foreach")
-  )
 
+bref <- c(bibDoPara, bibSplitSO, bibRforeach)
 ```
 
 This performance study will compare a simple task, the sum of a vector of integers, using various techniques ranging from for loop, base R's vectorized sum up to the doParallel package. The Microbenchmark package will be used to perform the timing measurements.
@@ -64,7 +67,16 @@ The base R `sum` function will be used as is.
 
 For parallelization, the `doParallel` package will provide the interface to base R's `parallel` package as described in 
 ```{r, results="asis", echo=FALSE} 
-citep(bref[1]) 
+citep(bibDoPara) 
+```
+. The split approach used to allocate data amongst various batches is taken from a StackOverflow post 
+```{r, results="asis", echo=FALSE} 
+citep(bibSplitSO) 
+```
+. Finally, the base R `foreach` function is
+used to to iterate over the batches and dispatch them to the parallelizer 
+```{r, results="asis", echo=FALSE} 
+citep(bibRforeach) 
 ```
 .
 
@@ -86,7 +98,8 @@ parallelForLoopSum(a)
 ```
 
 ```{r}
-setSize <- 10 ^ c(1, 2, 3, 4, 5, 6, 7, 8)
+setSize <- 10 ^ c(1, 2, 3, 4) #, 5, 6, 7, 8)
+resultsDF <- data.frame()
 
 for(s in setSize) {
   a <- sample(1:20, s, replace=TRUE)
@@ -103,23 +116,27 @@ for(s in setSize) {
                                             sum(a), 
                                             parallelForLoopSum(a), 
                                             times=10, unit="ms")
-  print(results)
   
-  class(results)
+  agSum <- summary(results)
+  agSum <- data.frame(agSum, count = s)
   
-  gp <- autoplot(results)
-  gp
+  resultsDF <- rbind(resultsDF, agSum)
+  
+  #gp <- autoplot(results)
+  #gp
 }
 
-print(setSize)
-
-
-# results <- microbenchmark::microbenchmark(mean(a), times=1)
-
 ```
-
 ```{r, echo=FALSE}
-gp
+require(ggplot2)
+g2 <- ggplot(data=resultsDF, aes(x=factor(count), y=mean))
+g2 <- g2 + geom_line(stat="identity", aes(group="expr", colour="expr"))
+g2 <- g2 + theme_minimal()
+g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g2 <- g2 + guides(colour = guide_legend("Legend"))
+g2 <- g2 + labs(title="R Performance - sum function", x="# of items", y="Time (ms)")
+g2
+print(resultsDF)
 ```
 
 You can also embed plots, for example:
@@ -132,7 +149,7 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 
 #### References ####
 ```{r, echo=FALSE}
-record_as_cited(bref)
+#record_as_cited(bref)
 
 ```{r, results='asis', echo=FALSE}
 BibOptions(style="html", bib.style="authortitle")
