@@ -1,0 +1,102 @@
+---
+title: 'Performance Study: R in Parallel'
+author: "Daniel Dittenhafer"
+date: "Friday, November 21, 2014"
+output: html_document
+---
+```{r, echo=FALSE}
+options(warn=-1)
+require(knitcitations, quietly=TRUE)
+require(RefManageR, quietly=TRUE)
+
+cleanbib()
+
+bref <- c(
+    bibentry(bibtype="Misc", 
+             title="Getting Started with doParallel and foreach", 
+             author=as.person("Steve Weston, Rich Calaway"),
+             year="2014",
+             url="http://cran.r-project.org/web/packages/doParallel/vignettes/gettingstartedParallel.pdf")
+    )
+
+```
+
+This performance study will compare a simple task, the sum of a vector of integers, using various techniques ranging from for loop, base R's vectorized sum up to the doParallel package. The Microbenchmark package will be used to perform the timing measurements.
+
+```{r}
+require(microbenchmark, quietly=TRUE)
+require(doParallel, quietly=TRUE)
+```
+
+I am running on a 4 core laptop, so I will use 3 cores for this test, leaving one for keeping my machine reasonably responsive. 
+
+```{r}
+registerDoParallel(cores=3) 
+```
+
+The for loop to be used in this study is wrapped in the function `forLoopFunc` and is defined as follows:
+
+```{r}
+forLoopFunc <- function(x)
+{
+  sum <- 0
+  
+  for( a in x){
+    sum <- sum + a
+  }
+  
+  return (a)
+}
+```
+
+The base R `sum` function will be used as is.
+
+For parallelization, the `doParallel` package will provide the interface to base R's `parallel` package as described in 
+```{r, results="asis", echo=FALSE} 
+citep(bref[1]) 
+```
+.
+
+```{r}
+parallelForLoopFun <- function(x) {
+    foreach(i=1:3) %dopar% sqrt(i)
+}
+
+
+```
+
+```{r}
+setSize <- 10 ^ c(1, 2, 3) #, 4, 5, 6, 7, 8)
+
+for(s in setSize) {
+  a <- sample(1:20, s, replace=TRUE)
+  
+  results <- microbenchmark::microbenchmark(forLoopFunc(a), sum(a), times=5, unit="ms")
+  print(results)
+}
+
+
+print(setSize)
+
+
+# results <- microbenchmark::microbenchmark(mean(a), times=1)
+
+```
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+#### References ####
+```{r, echo=FALSE}
+
+
+record_as_cited(bref)
+
+```{r, results='asis', echo=FALSE}
+BibOptions(style="html", bib.style="authortitle")
+bibliography()
+```
