@@ -1,5 +1,5 @@
 ---
-title: 'Performance Study: R in Parallel'
+title: 'R Performance Study: Summing in Parallel'
 author: "Daniel Dittenhafer"
 date: "Friday, November 21, 2014"
 output: html_document
@@ -11,7 +11,7 @@ require(RefManageR, quietly=TRUE)
 
 cleanbib()
 
-cite_options(citation_format="text")
+cite_options(style="markdown")
 
 bibDoPara <- bibentry(bibtype="Misc", 
              title="Getting Started with doParallel and foreach", 
@@ -36,7 +36,7 @@ bref <- c(bibDoPara, bibSplitSO, bibRforeach)
 x <- 1
 ```
 
-This performance study will compare a simple task, the sum of a vector of integers, using various techniques ranging from the old standard for loop, base R's vectorized `sum` function, and a  doParallel package implementation. The Microbenchmark package will be used to perform the timing measurements. Visualization of the timing measurements will be presented via ggplot2.
+This performance study compares a simple task, the summation of a vector of integers, using various techniques in the R language including the old standard `for` loop, base R's vectorized `sum` function, and a `doParallel` package implementation. The `microbenchmark` package is used to perform the timing measurements and visualization of the timing measurements is presented via `ggplot2`.
 
 ```{r}
 require(microbenchmark, quietly=TRUE)
@@ -44,15 +44,16 @@ require(doParallel, quietly=TRUE)
 require(ggplot2, quietly=TRUE)
 ```
 
-I am running on a 4 core laptop, so I will use 3 cores for this test, leaving one for keeping my machine reasonably responsive. 
+I am running on a 4 core laptop, so I will use 3 cores for this experiment, leaving one for keeping my machine reasonably responsive. 
 
 ```{r}
-registerDoParallel(cores=3) 
-
-print(parallel::detectCores())
+detectedCores <- parallel::detectCores()
+registerDoParallel(cores=detectedCores - 1) 
+print(detectedCores)
 ```
 
-The for loop to be used in this study is wrapped in the function `forLoopSum` and is defined as follows:
+#### Summing with For Loop ####
+The `for` loop to be used in this study is wrapped in the function `forLoopSum` and is defined as follows:
 
 ```{r}
 forLoopSum <- function(x)
@@ -65,34 +66,23 @@ forLoopSum <- function(x)
 }
 ```
 
+#### Summing the R Way ####
 The base R `sum` function will be used as is.
 
-```{r}
+```{r, results="hide"}
 sum(x)
 ```
 
-For parallelization, the `doParallel` package will provide the interface to base R's `parallel` package as described in 
-```{r, results="asis", echo=FALSE} 
-citep(bibDoPara) 
-```
-. The split approach used to allocate data amongst various batches is taken from a StackOverflow post 
-```{r, results='asis', echo=FALSE} 
-citep(bibSplitSO) 
-```
-. Finally, the base R `foreach` function is
-used to to iterate over the batches and dispatch them to the parallelizer 
-```{r, results="asis", echo=FALSE} 
-citep(bibRforeach) 
-```
-.
+#### Summing in Parallel ####
+For parallelization, the `doParallel` package will provide the interface to base R's `parallel` package as described in `r citet(bibDoPara)`. The split approach used to allocate data amongst various batches is taken from a StackOverflow post `r citep(bibSplitSO)`. Finally, the base R `foreach` function is
+used to to iterate over the batches and dispatch them to the parallelizer `r citep(bibRforeach)`.
 
 ```{r}
 parallelSum <- function(x) {
   
   items <- length(x)
-  batches <- parallel::detectCores()
-  batchSize <- items
-  batchSets <- split(x, sample(batches, items, replace=TRUE))
+  batches <- detectedCores * 4
+  batchSets <- split(x, rep(1:batches, length.out=items))
   
   finalSum <- foreach(b=iter(batchSets, by='row'), .combine="+") %dopar% sum(b)
   
@@ -100,56 +90,68 @@ parallelSum <- function(x) {
 }
 ```
 
+#### Performance Experiment #### 
+Using the functions described above, a microbenchmark experiment is excuted as shown in the following code. Powers of ten (10) are used to measure differences in magnitude of vector size up to 10 million, with 5 executions per size. The results are saved in a data.frame for use in visualization and the appendix.
+
 ```{r}
-setSize <- c(1, 2, 3, 4, 5, 6)#, 7, 8)
+setSize <- c(1, 2, 3, 4, 5, 6, 7, 8)
 resultsDF <- data.frame()
 
+# Loop through the set sizes and perform sub-experiment
 for(s in setSize) {
   size <- 10 ^ s
   a <- sample(1:20, size, replace=TRUE)
   
   # Validate
-  checkSum <- sum(a)
-  print(checkSum)
-  print(forLoopSum(a))
-  #stopifnot(identical(forLoopSum(a), checkSum))
+  checkSum <- as.integer(sum(a))
+  forSum <- as.integer(forLoopSum(a))
+  stopifnot(identical(forSum, checkSum))
   stopifnot(identical(parallelSum(a), checkSum))
   
   # Run performance test
   results <- microbenchmark::microbenchmark(forLoopSum(a), 
                                             sum(a), 
                                             parallelSum(a), 
-                                            times=10, unit="ms")
+                                            times=5, unit="ms")
   
+  # Save results
   agSum <- summary(results)
-  agSum <- data.frame(agSum, count = sprintf("10^%d", s))
+  agSumPlus <- data.frame(agSum, count = 10 ^ s) 
   
-  resultsDF <- rbind(resultsDF, agSum)
-  
-  #gp <- autoplot(results)
-  #gp
+  resultsDF <- rbind(resultsDF, agSumPlus)
 }
 
 ```
+#### Results ####
+The following chart shows the execution times for the various summation techniques. 
+
 ```{r, echo=FALSE}
 require(ggplot2)
-g2 <- ggplot(data=resultsDF, aes(x=factor(count)))
-
-# for(s in levels(as.factor(resultsDF$expr))) {
-#   print(s)
-#   subDF <- subset(resultsDF, expr == s, select = c(count, mean))
-#   g2 <- g2 + geom_line(data=subDF, aes(x=count, y=mean, colour=s), 
-#                        stat="identity")
-# }
+g2 <- ggplot(data=resultsDF, aes(x=(count)))
 g2 <- g2 + geom_line(aes(y=mean, group=expr, colour=expr), size=1) 
 g2 <- g2 + scale_fill_hue(l=40)
-#g2 <- g2 + theme_minimal()
 g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
 g2 <- g2 + guides(colour = guide_legend("Legend"))
-g2 <- g2 + labs(title="R Performance - sum function", x="length of vector", y="Time (ms)")
+g2 <- g2 + labs(title="R Performance - sum function", x="vector length", y="Mean Time (ms)")
 g2
-print(resultsDF)
 ```
+
+#### Conslusions ####
+As you can see, the base R `sum` function is very scalable compared to a standard `for` loop. A bit surprisingly,
+batching for parallelization does not improve the execution. Possibly base R is doing something similar under the covers and is optimized for this already, in contrast to my simple batch oriented parallelization which may suffer from non-performant batch determination (maybe the `split` and `rep` functions are eating up time?). This is an area for further investigation. 
+
+See the appendix that follows for more detailed statistics for each of the benchmark executions.  
+
+#### Appendix ####
+The following table lists the raw microbenchmark statistics from the experiment.
+
+```{r, result='asis', echo=FALSE}
+knitr::kable(resultsDF)
+```
+
+### Source Code ###
+The raw R markdown code used to produce this performance study can be found 
+[on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week13/PerformanceStud-RinParallel.Rmd).
 
 #### References ####
 ```{r, echo=FALSE}
