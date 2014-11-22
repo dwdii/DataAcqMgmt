@@ -32,14 +32,16 @@ bibRforeach <- bibentry(bibtype="Misc",
              url="http://www.inside-r.org/packages/cran/foreach/docs/foreach")
 
 bref <- c(bibDoPara, bibSplitSO, bibRforeach)
+
+x <- 1
 ```
 
-This performance study will compare a simple task, the sum of a vector of integers, using various techniques ranging from for loop, base R's vectorized sum up to the doParallel package. The Microbenchmark package will be used to perform the timing measurements.
+This performance study will compare a simple task, the sum of a vector of integers, using various techniques ranging from the old standard for loop, base R's vectorized `sum` function, and a  doParallel package implementation. The Microbenchmark package will be used to perform the timing measurements. Visualization of the timing measurements will be presented via ggplot2.
 
 ```{r}
 require(microbenchmark, quietly=TRUE)
 require(doParallel, quietly=TRUE)
-require(ggplot2)
+require(ggplot2, quietly=TRUE)
 ```
 
 I am running on a 4 core laptop, so I will use 3 cores for this test, leaving one for keeping my machine reasonably responsive. 
@@ -65,12 +67,16 @@ forLoopSum <- function(x)
 
 The base R `sum` function will be used as is.
 
+```{r}
+sum(x)
+```
+
 For parallelization, the `doParallel` package will provide the interface to base R's `parallel` package as described in 
 ```{r, results="asis", echo=FALSE} 
 citep(bibDoPara) 
 ```
 . The split approach used to allocate data amongst various batches is taken from a StackOverflow post 
-```{r, results="asis", echo=FALSE} 
+```{r, results='asis', echo=FALSE} 
 citep(bibSplitSO) 
 ```
 . Finally, the base R `foreach` function is
@@ -81,7 +87,7 @@ citep(bibRforeach)
 .
 
 ```{r}
-parallelForLoopSum <- function(x) {
+parallelSum <- function(x) {
   
   items <- length(x)
   batches <- parallel::detectCores()
@@ -92,33 +98,31 @@ parallelForLoopSum <- function(x) {
   
   return (finalSum)
 }
-
-a <- sample(1:20, 100, replace=TRUE)
-parallelForLoopSum(a)
 ```
 
 ```{r}
-setSize <- 10 ^ c(1, 2, 3, 4) #, 5, 6, 7, 8)
+setSize <- c(1, 2, 3, 4, 5, 6)#, 7, 8)
 resultsDF <- data.frame()
 
 for(s in setSize) {
-  a <- sample(1:20, s, replace=TRUE)
+  size <- 10 ^ s
+  a <- sample(1:20, size, replace=TRUE)
   
   # Validate
   checkSum <- sum(a)
   print(checkSum)
   print(forLoopSum(a))
   #stopifnot(identical(forLoopSum(a), checkSum))
-  stopifnot(identical(parallelForLoopSum(a), checkSum))
+  stopifnot(identical(parallelSum(a), checkSum))
   
   # Run performance test
   results <- microbenchmark::microbenchmark(forLoopSum(a), 
                                             sum(a), 
-                                            parallelForLoopSum(a), 
+                                            parallelSum(a), 
                                             times=10, unit="ms")
   
   agSum <- summary(results)
-  agSum <- data.frame(agSum, count = s)
+  agSum <- data.frame(agSum, count = sprintf("10^%d", s))
   
   resultsDF <- rbind(resultsDF, agSum)
   
@@ -129,23 +133,23 @@ for(s in setSize) {
 ```
 ```{r, echo=FALSE}
 require(ggplot2)
-g2 <- ggplot(data=resultsDF, aes(x=factor(count), y=mean))
-g2 <- g2 + geom_line(stat="identity", aes(group="expr", colour="expr"))
-g2 <- g2 + theme_minimal()
+g2 <- ggplot(data=resultsDF, aes(x=factor(count)))
+
+# for(s in levels(as.factor(resultsDF$expr))) {
+#   print(s)
+#   subDF <- subset(resultsDF, expr == s, select = c(count, mean))
+#   g2 <- g2 + geom_line(data=subDF, aes(x=count, y=mean, colour=s), 
+#                        stat="identity")
+# }
+g2 <- g2 + geom_line(aes(y=mean, group=expr, colour=expr), size=1) 
+g2 <- g2 + scale_fill_hue(l=40)
+#g2 <- g2 + theme_minimal()
 g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
 g2 <- g2 + guides(colour = guide_legend("Legend"))
-g2 <- g2 + labs(title="R Performance - sum function", x="# of items", y="Time (ms)")
+g2 <- g2 + labs(title="R Performance - sum function", x="length of vector", y="Time (ms)")
 g2
 print(resultsDF)
 ```
-
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-plot(cars)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 #### References ####
 ```{r, echo=FALSE}
