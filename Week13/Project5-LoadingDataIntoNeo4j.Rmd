@@ -3,9 +3,9 @@ title: "Loading R's eurodist Data into Neo4j"
 author: "Daniel Dittenhafer"
 date: "Sunday, November 23, 2014"
 output:
+  pdf_document: default
   html_document:
     keep_md: yes
-  pdf_document: default
 ---
 ```{r, echo=FALSE}
 options(warn=-1)
