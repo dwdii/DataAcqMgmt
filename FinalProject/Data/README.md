@@ -15,3 +15,7 @@ Accessed at http://data.bls.gov/timeseries/LNS14000000 on November 25, 2014 12:4
 United States Department of Commerce, Census Bureau. 
 Accessed at http://www.census.gov/popest/data/counties/totals/2013/index.html on November 24, 2014 2:43:00 PM
 
+### cb_2013_us_county_20m.shp
+United States Department of Commerce, Census Bureau. 
+Cartographic Boundary Shapefile - Counties 2013. 
+Accessed at http://www.census.gov/geo/maps-data/data/cbf/cbf_counties.html on November 25, 2014 1:58:00 PM
