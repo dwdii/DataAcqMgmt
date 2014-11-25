@@ -7,6 +7,7 @@ library(gridExtra)
 chartFileOutputFolder <- "C:/Code/R/DataAcqMgmt/FinalProject/Charts/"
 
 bibBirthData <- bibentry(bibtype="Misc",
+                         author=as.person("HHS"),
                          publisher="United States Department of Health and Human Services (US DHHS), Centers for Disease Control and Prevention (CDC), National Center for Health Statistics (NCHS), Division of Vital Statistics",
                          title="Natality public-use data 2007-2012 on CDC WONDER Online Database",
                          year=2014,
@@ -30,27 +31,8 @@ print(bibBirthData, style="html")
 # FUNCTION: geoVisual 
 #
 #
-geoVisual <- function(shapeSpatial, data, title, filename)
-{
-  #print(summary(shapefile))
-  #print(attributes(shapefile@data))
-  #print(shapefile@data$NAME)
-  
-  #shapeSpatial@data <- merge(shapeSpatial@data,data,by.x='GEOID', by.y='County.Code')  
-  #print(summary(shapefile))
-
-  
-  #shapeSpatial@data <- subset(shapeSpatial@data, !is.na(shapeSpatial@data$County))
-  #print(head(shapefile@data))
-  
-  shapeData <- fortify(shapeSpatial)
-  #print(summary(shapeData))
-  
-
-  #print(tail(shapeData$id, 50))
-  
-  #print(summary(shapeData))
-  
+geoVisual <- function(shapeData, data, title, filename)
+{  
   # select out the id and births columns
   subCountyBirth <- subset(data, select=c('County.Code', 'Births'))
   subCountyBirth <- rename(subCountyBirth, c('County.Code'='id'))
@@ -59,7 +41,7 @@ geoVisual <- function(shapeSpatial, data, title, filename)
 
   # integrate the birth data and create a percentage metric
   shapeData <- join(shapeData, subCountyBirth, by='id')  
-  shapeData <- dplyr::mutate(shapeData, birthPercent = Births / max(Births, na.rm=TRUE))
+  shapeData <- dplyr::mutate(shapeData, birthPercent = Births / sum(Births, na.rm=TRUE))
   
   #print(summary(shapeData))
   #print(head(subset(shapeData, is.na(Births)), 100))
@@ -102,30 +84,23 @@ geoVisual <- function(shapeSpatial, data, title, filename)
 #
 loadShapeData <- function()
 {
-  shpFile <- "C:/Users/Dan/Downloads/Data/US-County-ShapeFile/cb_2013_us_county_500k/cb_2013_us_county_500k.shp"
+  shpFile <- "C:/Users/Dan/Downloads/Data/US-County-ShapeFile/cb_2013_us_county_20m/cb_2013_us_county_20m.shp"
   
   # read data into R 
   shapefile <- readShapeSpatial(shpFile, 
                                 proj4string = CRS("+proj=longlat +datum=WGS84"), IDvar="GEOID")
+  
+  shapeData <- fortify(shapefile)
 
-  return (shapefile)
+  return (shapeData)
 }
 
-# changeit<-function(x) {
-#   x$data <- data.frame(a=rep(1, 2))
-#   x$data2 <- data.frame(a=rep(4, 3))
-# }
-# 
-# 
-# x <- list()
-# x$data <- data.frame(b=rep(2,3))
-# print(head(x))
-# print(head(x$data))
-# changeit(x)
-# print(head(x))
-# print(head(x$data))
-
-if(TRUE) {
+#####
+# FUNCTION: loadBirthData 
+#
+#
+loadBirthData <- function()
+{
   # Load the Natality data
   birthFile <- "C:/Code/R/DataAcqMgmt/FinalProject/Data/Natality, 2007-2012-StateCounty.txt"
   birthData <- read.table(birthFile, 
@@ -145,17 +120,79 @@ if(TRUE) {
                                        'numeric'))  # Births
   
   #print(birthData[is.na(birthData$Births),])
-  birthDataWoNa <- subset(birthData, !is.na(birthData$Births))
+  birthDataWoNa <- subset(birthData, !is.na(birthData$Births))  
   
+  return (birthDataWoNa)
+}
+
+#####
+# FUNCTION: loadCensusData 
+#
+#
+loadCensusData <- function()
+{
+  # Load the Natality data
+  dataFile <- "C:/Code/R/DataAcqMgmt/FinalProject/Data/CO-EST2013-Alldata.txt"
+  data <- read.table(dataFile, 
+                          header=TRUE, 
+                          sep=",", 
+                          fill=TRUE, 
+                          stringsAsFactors=FALSE) 
+  
+  print(summary(data))
+  #print(birthData[is.na(birthData$Births),])
+  #dataWoNa <- subset(birthData, !is.na(birthData$Births))  
+  
+  return (data)
+}
+
+#####
+# FUNCTION: loadUnemploymentData 
+#
+#
+loadUnemploymentData <- function()
+{
+  # Load the Natality data
+  dataFile <- "C:/Code/R/DataAcqMgmt/FinalProject/Data/USUnemploymentRates2007-2012.csv"
+  data <- read.table(dataFile, 
+                     header=TRUE, 
+                     sep=",", 
+                     fill=TRUE, 
+                     stringsAsFactors=FALSE) 
+  
+  print(summary(data))
+
+  return (data)
+}
+
+# changeit<-function(x) {
+#   x$data <- data.frame(a=rep(1, 2))
+#   x$data2 <- data.frame(a=rep(4, 3))
+# }
+# 
+# 
+# x <- list()
+# x$data <- data.frame(b=rep(2,3))
+# print(head(x))
+# print(head(x$data))
+# changeit(x)
+# print(head(x))
+# print(head(x$data))
+
+if(TRUE) {
+  
+  birthDataWoNa <- loadBirthData()
+  censusData <- loadCensusData()
+  unempData <- loadUnemploymentData()
   shapes <- loadShapeData()
   
-  years <- c(2007, 2008)
-  months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+  years <- c(2012)
+  months <- c("January") #, "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
   for(year in years){
     for (month in months ) { # seq(1, 12, by=1)
     birthsYrMonth <- subset(birthDataWoNa, birthDataWoNa$Year == year & birthDataWoNa$Month == month)
     
-    summary(birthsYrMonth)
+    print(summary(birthsYrMonth))
     
     title <- sprintf("U.S. Births - %s, %d", month, year)
     filename <- sprintf("%d_%s_US_Births", year, month)
