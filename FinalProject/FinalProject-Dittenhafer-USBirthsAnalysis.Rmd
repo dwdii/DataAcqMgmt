@@ -1,0 +1,323 @@
+---
+title: "U.S. Births Analysis"
+author: "Daniel Dittenhafer"
+date: "Tuesday, November 25, 2014"
+output: html_document
+---
+```{r, echo=FALSE}
+options(warn=-1)
+require(knitcitations, quietly=TRUE)
+require(RefManageR, quietly=TRUE)
+
+cleanbib()
+
+cite_options(style="markdown")
+
+bibBirthData <- bibentry(bibtype="Misc",
+                         author=person(family="HHS"),
+                         publisher="United States Department of Health and Human Services (US DHHS), Centers for Disease Control and Prevention (CDC), National Center for Health Statistics (NCHS), Division of Vital Statistics",
+                         title="Natality public-use data 2007-2012 on CDC WONDER Online Database",
+                         year=2014,
+                         month="April",
+                         url="http://wonder.cdc.gov/natality-current.html")
+
+bibCensusData <- bibentry(bibtype="Misc",
+                         author=person(family="U.S. Census Bureau"),
+                         title="County Totals: Vintage 2013",
+                         year=2014,
+                         url="http://www.census.gov/popest/data/counties/totals/2013/index.html")
+
+bibLaborData <- bibentry(bibtype="Misc",
+                         author=person(family="U.S. Bureau of Labor Statistics"),
+                         title="Labor Force Statistics from the Current Population Survey",
+                         year=2014,
+                         url="http://data.bls.gov/timeseries/LNS14000000")
+
+bibMapsInRBlog <- bibentry(bibtype="Misc",
+                           author=as.person("Kevin Johnson"),
+                           title="Making Maps in R",
+                           year=2014,
+                           url="http://www.kevjohnson.org/making-maps-in-r/")
+
+bibGgplotFootnote <- bibentry(bibtype="Misc",
+                              title="Best way to add a footnote to a plot created with ggplot2",
+                              author=person(given="Wendi (Alan)", family="Wang"),
+                              year=2013,
+                              url="http://bigdata-analyst.com/best-way-to-add-a-footnote-to-a-plot-created-with-ggplot2.html")
+
+bibGgmapPdf <- bibentry(bibtype="Misc",
+                        title="ggmap: Spatial Visualization with ggplot2",
+                        author=as.person("David Kahle and Hadley Wickham"),
+                        year=2013,
+                        url="http://journal.r-project.org/archive/2013-1/kahle-wickham.pdf")
+
+bibShapeFile <- bibentry(bibtype="Misc",
+                         author=person(family="U.S. Census Bureau"),
+                         title="Cartographic Boundary Shapefiles - Counties",
+                         institution="U.S. Census Bureau",
+                         year=2013,
+                         url="http://www.census.gov/geo/maps-data/data/cbf/cbf_counties.html")
+
+```
+### Preface
+This study was performed as part of the Data Acquisition and Management (IS607) course requirements for the Master of Science, Data Analytics at City University of New York (CUNY).
+
+### Introduction
+The U.S. Department of Health and Human Services (HHS) aggregates birth related data from around the United States and, among other things, makes it available on their website for public access `r citep(bibBirthData)`. Using this data in combination with census data from the U.S. Census Bureau `r citep(bibCensusData)` and unemployment data from the Bureau of Labor Statistics `r citep(bibLaborData)`, this study analyzes how birth rates have changed from 2007 (prior to the great recession) through to 2012 (the most recent year for available natality data).
+
+### Methodology
+At a high level, the methodology employed in this study follows Hadley Wickham's Grammar of Data Science. Specifically, this includes acquiring data, tidying the data, analyzing the data, and communicating information regarding the data.
+
+The following R packages are used throughout the code to enable various data loading, transformation and visualization aspects of this study.
+
+```{r}
+library(ggplot2)
+library(ggmap)
+library(plyr)
+library(sp)
+library(maptools)
+library(grid)
+library(gridExtra)
+library(reshape2)
+```
+
+I have hosted the data used in this study in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub likes to use SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in.
+
+```{r}
+gitHubRoot <- "https://github.com/dwdii/DataAcqMgmt/raw/master/FinalProject/Data"
+if(.Platform$OS.type == "windows") {
+  setInternet2(TRUE)
+}
+```
+
+The `ggmap` package will be used to visualize the birth rate data to given us a geographical sense of it. As such, shape data for United States counties was acquired from the U.S. Census Bureau `r citep(bibShapeFile)`. The following function downloads this shape data and initializes it for use by `ggmap` `r citep(bibGgmapPdf)`.
+```{r}
+#####
+# FUNCTION: loadShapeData 
+#
+loadShapeData <- function(fileNoExt)
+{
+  # Download the shape files from the cloud.
+  shpFile <- NA
+  shapeFileExts <- c(".shp", ".shx", ".dbf")
+  print(shapeFileExts)
+  for(i in 1:length(shapeFileExts))
+  {
+    shpFileUrl <- sprintf("%s/%s%s", gitHubRoot, fileNoExt, shapeFileExts[i])
+    tmpFile <- sprintf("%s\\%s%s", tempdir(), fileNoExt, shapeFileExts[i])
+    
+    download.file(shpFileUrl, tmpFile, method="internal", mode="wb")
+    if(shapeFileExts[i] == ".shp") {
+      shpFile <- tmpFile
+    }
+  }
+  
+  # Read data into R 
+  shapefile <- readShapeSpatial(shpFile, 
+                                proj4string = CRS("+proj=longlat +datum=WGS84"), IDvar="GEOID")
+  # Convert to a format ggmap likes
+  shapeData <- fortify(shapefile)
+
+  return (shapeData)
+}
+```
+
+HHS provides various data sets related to natality, though the most recent year available is 2012. The 5 year period from 2007 - 2012 was downloaded and posted to GitHub for this study. As shown below, the data is tab delimited. HHS includes data set notes which result in NA values in the Births data column. These NA values were removed. Also the `Year.Code` and `Month.code` are combined to give a single `Date` column for use in aggregations later.
+
+```{r}
+#####
+# FUNCTION: loadBirthData 
+#
+loadBirthData <- function()
+{
+  # Load the Natality data
+  birthFile <- sprintf("%s/Natality, 2007-2012-StateCounty.txt", gitHubRoot)
+  birthData <- read.table(birthFile, 
+                          header=TRUE, 
+                          sep="\t", 
+                          fill=TRUE, 
+                          stringsAsFactors=FALSE,
+                          colClasses=c('character', # Notes
+                                       'character', # Year
+                                       'character', # Year.Code
+                                       'character', # Month
+                                       'character', # Month.Code
+                                       'character', # State
+                                       'character', # State.Code
+                                       'character', # County
+                                       'character', # County.Code
+                                       'numeric'))  # Births
+  
+  # Eleminate rows with no birth data (some rows have comments only)
+  birthDataWoNa <- subset(birthData, !is.na(birthData$Births)) 
+
+  # Transform raw year/month columns into a Date column
+  birthDataWoNa <- mutate(birthDataWoNa, 
+                          Date = lubridate::parse_date_time(sprintf("%s-%s-01", 
+                                                                    Year.Code, 
+                                                                    Month.Code), 
+                                                            orders="ymd"))  
+  
+  #print(head(birthDataWoNa))
+  
+  return (birthDataWoNa)
+}
+```
+
+```{r}
+#####
+# FUNCTION: loadUnemploymentData 
+#
+loadUnemploymentData <- function()
+{
+  # Load the Unemployment data
+  dataFile <- sprintf("%s/USUnemploymentRates2007-2012.csv", gitHubRoot)
+  data <- read.table(dataFile, 
+                     header=TRUE, 
+                     sep=",", 
+                     fill=TRUE, 
+                     stringsAsFactors=FALSE) 
+  
+  # Melt the data to a long format
+  data <- melt(data, id.vars=c("Year"), variable.name="Month", value.name="UnemploymentRate")
+  
+  # Transform raw year/month columns into a Date column, sorted
+  data <- mutate(data, 
+                 Date = lubridate::parse_date_time(sprintf("%s-%s-01", 
+                                                            Year, 
+                                                            Month), 
+                                                    orders="ybd"))
+  data <- data[order(data$Date), ]
+  
+  #print(summary(data))
+  #print(head(data))
+
+  return (data)
+}
+
+#####
+# FUNCTION: loadCensusData 
+#
+loadCensusData <- function()
+{
+  # Load the Natality data
+  dataFile <- "C:/Code/R/DataAcqMgmt/FinalProject/Data/CO-EST2013-Alldata.txt"
+  data <- read.table(dataFile, 
+                          header=TRUE, 
+                          sep=",", 
+                          fill=TRUE, 
+                          stringsAsFactors=FALSE) 
+  
+  print(summary(data))
+  #print(birthData[is.na(birthData$Births),])
+  #dataWoNa <- subset(birthData, !is.na(birthData$Births))  
+  
+  return (data)
+}
+
+
+```
+
+The data is first loaded into data.frames from the hosted locations.
+```{r}
+birthDataWoNa <- loadBirthData()
+#censusData <- loadCensusData()
+#shapes <- loadShapeData("cb_2013_us_county_20m")
+
+#print(summary(shapes))
+```
+
+Lets look at how many births occurred each month by aggregating the birth data by date. The `Date` column in this case is at a month granularity as a result of the transformation applied in the `loadBirthData` function.
+
+```{r}
+birthsPerYearMth <- aggregate(Births ~  Date, birthDataWoNa, sum)
+birthsPerYearMth <- birthsPerYearMth[order(birthsPerYearMth$Date), ]
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012"}
+g1 <- ggplot(data=birthsPerYearMth, aes(x=Date))
+g1 <- g1 + geom_point(aes(y=Births, colour="Births"))
+#g1 <- g1 + scale_fill_hue(l=40)
+g1 <- g1 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g1 <- g1 + guides(colour = guide_legend("Legend"))
+g1 <- g1 + labs(title="United States Births 2007 - 2012",
+                x="Time",
+                y="Births")
+g1
+
+```
+
+It looks like there is a downward trend. Lets run a linear regression and overlay that.
+
+```{r}
+fit <- lm(Births ~ Date, data=birthsPerYearMth)
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression"}
+g1 <- g1 + geom_abline(aes(colour="Linear"), 
+                       intercept=fit$coefficients[1], 
+                       slope=fit$coefficients[2])
+g1 <- g1 + annotate("Text", label=sprintf("y=%.2f + %fX", fit$coefficients[1], fit$coefficients[2]),
+                    yend=max(birthsPerYearMth$Births), 
+                    xend=lubridate::parse_date_time("2012-12-01", "ymd"),
+                    size=3)
+g1
+```
+
+Definitely a negative trend overall, but not a drastic one... the slope is only `r sprintf("%f", fit$coefficients[2])`.  Ok, lets bring unemployment data in the picture during this same time frame.
+
+```{r}
+unempData <- loadUnemploymentData()
+tsData <- ts.intersect(B=as.ts(birthsPerYearMth), U=as.ts(unempData))
+#print(tsData)
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Unemployment Rate 2007 - 2012"}
+g2 <- ggplot(data=unempData, aes(x=Date))
+g2 <- g2 + geom_point(aes(y=UnemploymentRate, colour="Unemployment Rate"))
+g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
+g2 <- g2 + guides(colour = guide_legend("Legend"))
+g2 <- g2 + labs(title="U.S. Unemployment Rate 2007 - 2012",
+                x="Time",
+                y="Unemployment Rate")
+g2
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate"}
+modelRoot <- 3
+g1 <- g1 + geom_point(data=unempData, aes(y=UnemploymentRate^(1/modelRoot) * 100000 * 2, colour="Unemployment Rate"))
+
+g1
+```
+
+```{r}
+
+x.root <- function(y, root)
+{
+  return (y ^ (1/root))
+}
+
+fit2 <- lm(B.Births ~ U.UnemploymentRate*x.root(U.UnemploymentRate, modelRoot), data=tsData)
+print(summary(fit2))
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate & Model"}
+g1 <- g1 + geom_point(data=unempData, aes(y=fit2$coefficients[1] + 
+                                            (fit2$coefficients[2] * UnemploymentRate) + 
+                                            (fit2$coefficients[3] * x.root(UnemploymentRate, modelRoot)) +
+                                            (fit2$coefficients[4] * UnemploymentRate * x.root(UnemploymentRate, modelRoot)), colour="Model"))
+
+g1
+```
+
+
+### Source Code ###
+The raw R markdown code used to produce this study can be found 
+[on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week13/Project5-LoadingDataIntoNeo4j.Rmd).
+
+### References ###
+
+```{r, results='asis', echo=FALSE}
+BibOptions(style="html", bib.style="authortitle")
+bibliography()
+```

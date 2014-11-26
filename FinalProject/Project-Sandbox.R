@@ -186,7 +186,7 @@ if(TRUE) {
   unempData <- loadUnemploymentData()
   shapes <- loadShapeData()
   
-  years <- c(2012)
+  years <- c(2007,2008,2009,2010,2011,2012)
   months <- c("January") #, "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
   for(year in years){
     for (month in months ) { # seq(1, 12, by=1)
