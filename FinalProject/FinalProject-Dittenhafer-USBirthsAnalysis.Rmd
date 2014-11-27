@@ -1,7 +1,7 @@
 ---
-title: "U.S. Births Analysis"
+title: "U.S. Births Analysis 2007 - 2012"
 author: "Daniel Dittenhafer"
-date: "Tuesday, November 25, 2014"
+date: "Monday, December 1, 2014"
 output: html_document
 ---
 ```{r, echo=FALSE}
@@ -58,19 +58,69 @@ bibShapeFile <- bibentry(bibtype="Misc",
                          year=2013,
                          url="http://www.census.gov/geo/maps-data/data/cbf/cbf_counties.html")
 
+bibAniGif <- bibentry(bibtype="Misc",
+                      title="Free Online Animated GIF Maker",
+                      author=person(family="Gifmaker.me"),
+                      year=2014,
+                      url="http://gifmaker.me/")
+
+bibGramDS <- bibentry(bibtype="Misc",
+                      title="The Grammar and Graphics of Data Science",
+                      year=2014,
+                      author=as.person("Hadley Wickham, Winston Chang"),
+                      url="http://pages.rstudio.net/Webinar-Series-Recording-Essential-Tools-for-R.html")
+
 ```
 ### Preface
-This study was performed as part of the Data Acquisition and Management (IS607) course requirements for the Master of Science, Data Analytics at City University of New York (CUNY).
+This study was performed as part of the Data Acquisition and Management (IS607) course requirements for the Master of Science, Data Analytics program at City University of New York (CUNY).
 
 ### Introduction
-The U.S. Department of Health and Human Services (HHS) aggregates birth related data from around the United States and, among other things, makes it available on their website for public access `r citep(bibBirthData)`. Using this data in combination with census data from the U.S. Census Bureau `r citep(bibCensusData)` and unemployment data from the Bureau of Labor Statistics `r citep(bibLaborData)`, this study analyzes how birth rates have changed from 2007 (prior to the great recession) through to 2012 (the most recent year for available natality data).
+The U.S. Department of Health and Human Services (HHS) aggregates birth related data from around the United States and, among other things, makes it available on their website for public access `r citep(bibBirthData)`. Using this data in combination with census data from the U.S. Census Bureau `r citep(bibCensusData)` and unemployment data from the Bureau of Labor Statistics `r citep(bibLaborData)`, this study analyzes how birth rates have changed from 2007 (prior to the great recession) through to 2012 (the most recently available year for natality data from HHS).
+
+### Data Set Profile
+
+#### United States Natality 2007 - 2012
+
+-----------------------------------------------------------------------------------------
+Data Set         Number of              Attribute              Number of 
+Characteristics  Observations Area      Characteristics        Attributes Missing Values?
+--------------- ------------- --------- ---------------------- ---------- ---------------
+Multivariate    41,184        Health    Categorical, Integer   10         No     
+                                          
+--------------------------------------- ---------------------- ---------- --------------- 
+* The Natality data is partitioned by year, month, state and county. For counties with
+populations less than 100,000, births are binned together into an Unidentified Counties
+entry.
+
+#### United States Census 2010
+
+-----------------------------------------------------------------------------------------
+Data Set         Number of              Attribute              Number of 
+Characteristics  Observations Area      Characteristics        Attributes Missing Values?
+--------------- ------------- --------- ---------------------- ---------- ---------------
+Multivariate    3,194         Civil     Categorical, Integer   40+        No     
+                                          
+--------------------------------------- ---------------------- ---------- --------------- 
+* The Census data is partitioned by state and county, and contains many more attributes
+than are used in this study.
+
+#### United States Unemployment Rate 2007 - 2012
+
+-----------------------------------------------------------------------------------------
+Data Set         Number of              Attribute              Number of 
+Characteristics  Observations Area      Characteristics        Attributes Missing Values?
+--------------- ------------- --------- ---------------------- ---------- ---------------
+Multivariate    72            Civil     Categorical, Integer   40+        No     
+                                          
+--------------------------------------- ---------------------- ---------- --------------- 
+* The Unemployment data is partitioned by year and month.
 
 ### Methodology
-At a high level, the methodology employed in this study follows Hadley Wickham's Grammar of Data Science. Specifically, this includes acquiring data, tidying the data, analyzing the data, and communicating information regarding the data.
+At a high level, the methodology employed in this study follows Hadley Wickham's Grammar of Data Science `r citep(bibGramDS)`. Specifically, this includes acquiring data, tidying the data, analyzing the data, and communicating information regarding the data.
 
 The following R packages are used throughout the code to enable various data loading, transformation and visualization aspects of this study.
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(ggmap)
 library(plyr)
@@ -81,7 +131,7 @@ library(gridExtra)
 library(reshape2)
 ```
 
-I have hosted the data used in this study in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub likes to use SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in.
+The data sests used throughout this study are hosted in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub uses SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in.
 
 ```{r}
 gitHubRoot <- "https://github.com/dwdii/DataAcqMgmt/raw/master/FinalProject/Data"
@@ -90,7 +140,8 @@ if(.Platform$OS.type == "windows") {
 }
 ```
 
-The `ggmap` package will be used to visualize the birth rate data to given us a geographical sense of it. As such, shape data for United States counties was acquired from the U.S. Census Bureau `r citep(bibShapeFile)`. The following function downloads this shape data and initializes it for use by `ggmap` `r citep(bibGgmapPdf)`.
+The `ggmap` package will help visualize the birth rate data to give us a geographical sense of it. As such, shape data for United States counties was acquired from the U.S. Census Bureau `r citep(bibShapeFile)`. The following function downloads this shape data and initializes it for use by `ggmap` `r citep(bibGgmapPdf)`.
+
 ```{r}
 #####
 # FUNCTION: loadShapeData 
@@ -114,7 +165,8 @@ loadShapeData <- function(fileNoExt)
   
   # Read data into R 
   shapefile <- readShapeSpatial(shpFile, 
-                                proj4string = CRS("+proj=longlat +datum=WGS84"), IDvar="GEOID")
+                                proj4string = CRS("+proj=longlat +datum=WGS84"), 
+                                IDvar="GEOID")
   # Convert to a format ggmap likes
   shapeData <- fortify(shapefile)
 
@@ -122,7 +174,14 @@ loadShapeData <- function(fileNoExt)
 }
 ```
 
-HHS provides various data sets related to natality, though the most recent year available is 2012. The 5 year period from 2007 - 2012 was downloaded and posted to GitHub for this study. As shown below, the data is tab delimited. HHS includes data set notes which result in NA values in the Births data column. These NA values were removed. Also the `Year.Code` and `Month.code` are combined to give a single `Date` column for use in aggregations later.
+HHS provides various data sets related to natality, though the most recent year
+available is 2012. The 6 year period from 2007 - 2012 was downloaded and posted 
+to GitHub for this study. The data is tab delimited and although many values 
+are integer in nature (State Code and County Code for example), they are better
+loaded as character data to preserve '0' padding. HHS includes data set notes 
+which result in `NA` values in the Births data column. These NA values were 
+removed. Also the `Year.Code` and `Month.Code` are combined to give a single 
+`Date` column for use in aggregations later.
 
 ```{r}
 #####
@@ -156,13 +215,38 @@ loadBirthData <- function()
                           Date = lubridate::parse_date_time(sprintf("%s-%s-01", 
                                                                     Year.Code, 
                                                                     Month.Code), 
-                                                            orders="ymd"))  
-  
-  #print(head(birthDataWoNa))
-  
+                                                            orders="ymd"))
   return (birthDataWoNa)
 }
 ```
+
+The following function, `loadCensusData`, loads the census data from the GitHub repository. Three new columns are added to the data set. State and County codes are concatenated to form the same combined identifier `County.Code` found in the Natality data. Additionally, the population values are reduced by some orders of magnitude for use in the birth rate normalization performed for the geographic visualization later.
+
+```{r}
+#####
+# FUNCTION: loadCensusData 
+#
+loadCensusData <- function()
+{
+  # Load the Census data
+  dataFile <- sprintf("%s/CO-EST2013-Alldata.txt", gitHubRoot)
+  data <- read.table(dataFile, 
+                     header=TRUE, 
+                     sep=",", 
+                     quote="",
+                     fill=TRUE, 
+                     stringsAsFactors=FALSE,
+                     colClasses=c('character')) 
+  
+  data <- mutate(data, County.Code=paste(STATE, COUNTY, sep=""))
+  data <- mutate(data, CENSUS2010POPThousands=as.numeric(CENSUS2010POP) / 1000)
+  data <- mutate(data, CENSUS2010POPHundreds=as.numeric(CENSUS2010POP) / 100) 
+  
+  return (data)
+}
+```
+
+Like the other data sets, the Unemployment Rate data set is downloaded via a helper function `loadUnemploymentData`, and prepared for analysis. The U.S. Bureau of Labor Statistics publishes the Unemployment rate in a wide format whereby rows are by year, and columns represent each month of the year with the Unemployment rate as the values of these cells. As part of the tidying activity, this wide format is melted to a long format more useful for our analysis. The year/month combinations are converted to a date data type, and the data is sorted. 
 
 ```{r}
 #####
@@ -188,34 +272,9 @@ loadUnemploymentData <- function()
                                                             Month), 
                                                     orders="ybd"))
   data <- data[order(data$Date), ]
-  
-  #print(summary(data))
-  #print(head(data))
 
   return (data)
 }
-
-#####
-# FUNCTION: loadCensusData 
-#
-loadCensusData <- function()
-{
-  # Load the Natality data
-  dataFile <- "C:/Code/R/DataAcqMgmt/FinalProject/Data/CO-EST2013-Alldata.txt"
-  data <- read.table(dataFile, 
-                          header=TRUE, 
-                          sep=",", 
-                          fill=TRUE, 
-                          stringsAsFactors=FALSE) 
-  
-  print(summary(data))
-  #print(birthData[is.na(birthData$Births),])
-  #dataWoNa <- subset(birthData, !is.na(birthData$Births))  
-  
-  return (data)
-}
-
-
 ```
 
 The data is first loaded into data.frames from the hosted locations.
@@ -310,6 +369,7 @@ g1 <- g1 + geom_point(data=unempData, aes(y=fit2$coefficients[1] +
 g1
 ```
 
+![Visualization of U.S. Births December 2009](C:\\Code\\R\\DataAcqMgmt\\FinalProject\\Charts\\2009_December_US_Births.png)
 
 ### Source Code ###
 The raw R markdown code used to produce this study can be found 
