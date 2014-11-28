@@ -219,7 +219,7 @@ fillinCounties <- function(r, reident)
 # print(head(x))
 # print(head(x$data))
 
-if(TRUE) {
+if(FALSE) {
   
   birthDataWoNa <- loadBirthData()
   censusData <- loadCensusData()
