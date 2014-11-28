@@ -200,8 +200,6 @@ fillinCounties <- function(r, reident)
         County=paste(counties$CTYNAME, ", ", counties$STNAME, sep=""),
         County.Code=counties$County.Code,
         Births=r$Births * (as.numeric(counties$CENSUS2010POP) / sum(as.numeric(counties$CENSUS2010POP)))
-        #,STNAME=rep(r$State, countyLen)
-        #,CTYNAME=counties$CTYNAME
         )
   
   return (dfCountiesYearMonth)

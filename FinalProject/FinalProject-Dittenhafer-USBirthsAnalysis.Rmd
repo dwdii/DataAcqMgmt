@@ -2,7 +2,9 @@
 title: "U.S. Births Analysis 2007 - 2012"
 author: "Daniel Dittenhafer"
 date: "Monday, December 1, 2014"
-output: html_document
+output:
+  pdf_document:
+    latex_engine: xelatex
 ---
 ```{r, echo=FALSE}
 options(warn=-1)
@@ -140,39 +142,7 @@ if(.Platform$OS.type == "windows") {
 }
 ```
 
-The `ggmap` package will help visualize the birth rate data to give us a geographical sense of it. As such, shape data for United States counties was acquired from the U.S. Census Bureau `r citep(bibShapeFile)`. The following function downloads this shape data and initializes it for use by `ggmap` `r citep(bibGgmapPdf)`.
 
-```{r}
-#####
-# FUNCTION: loadShapeData 
-#
-loadShapeData <- function(fileNoExt)
-{
-  # Download the shape files from the cloud.
-  shpFile <- NA
-  shapeFileExts <- c(".shp", ".shx", ".dbf")
-  print(shapeFileExts)
-  for(i in 1:length(shapeFileExts))
-  {
-    shpFileUrl <- sprintf("%s/%s%s", gitHubRoot, fileNoExt, shapeFileExts[i])
-    tmpFile <- sprintf("%s\\%s%s", tempdir(), fileNoExt, shapeFileExts[i])
-    
-    download.file(shpFileUrl, tmpFile, method="internal", mode="wb")
-    if(shapeFileExts[i] == ".shp") {
-      shpFile <- tmpFile
-    }
-  }
-  
-  # Read data into R 
-  shapefile <- readShapeSpatial(shpFile, 
-                                proj4string = CRS("+proj=longlat +datum=WGS84"), 
-                                IDvar="GEOID")
-  # Convert to a format ggmap likes
-  shapeData <- fortify(shapefile)
-
-  return (shapeData)
-}
-```
 
 HHS provides various data sets related to natality, though the most recent year
 available is 2012. Given our interest in the period including the 2008 recession,
@@ -285,7 +255,6 @@ Using the functions defined above, let's bring the natality, census and shape da
 ```{r}
 birthDataWoNa <- loadBirthData()
 censusData <- loadCensusData()
-shapes <- loadShapeData("cb_2013_us_county_20m")
 ```
 
 We can determine how many births occurred each month by aggregating the birth data by date. The `Date` column in this case is at a month granularity as a result of the transformation applied in the `loadBirthData` function.
@@ -321,23 +290,24 @@ g1 <- g1 + geom_smooth(data=subset(birthsPerYearMth, lubridate::year(Date) < 201
 g1 <- g1 + geom_smooth(data=subset(birthsPerYearMth, lubridate::year(Date) >= 2010), 
                        aes(colour="Linear >= 2010", y=Births), method="lm")
 g1 <- g1 + annotate("Text", label=sprintf("y=%.2f + %fX", fit$coefficients[1], fit$coefficients[2]),
-                    y=max(birthsPerYearMth$Births), 
+                    y=max(subset(birthsPerYearMth, lubridate::year(Date) == 2009)$Births), 
                     x=lubridate::parse_date_time("2010-12-01", "ymd"),
                     size=3)
 g1
 ```
 
-Definitely a negative trend overall, but not a drastic one... the slope is only `r sprintf("%f", fit$coefficients[2])`.  And notice that when we differentiate pre-2011 versus 2010 onward, the sign of the slope flips. After 2010, there is a definite rise in births. Ok, lets bring unemployment data in the picture during this same time frame.
+The "Linear" line is a simple linear regression on the entire data set, while the "Linear < 2011" line shows a simple linear regression of only the data between 2007 - 2010. Likewise, the "Linear >= 2010" line shows a simple linear regression for the data between 2010 - 2012. As can be seen by the "Linear" line, there is definitely a negative trend overall, but not a drastic one... the slope is only `r sprintf("%f", fit$coefficients[2])`.  Notice that when we differentiate pre-2011 versus 2010 onward, the sign of the slope flips. This is evidence of the suspected trough in 2010 mentioned earlier. After 2010, there is a definite rise in births. 
+
+Ok, lets bring unemployment data in the picture during this same time frame.
 
 ```{r}
 unempData <- loadUnemploymentData()
-tsData <- ts.intersect(B=as.ts(birthsPerYearMth), U=as.ts(unempData))
-#print(tsData)
 ```
 
 ```{r, echo=FALSE, fig.cap="U.S. Unemployment Rate 2007 - 2012"}
 g2 <- ggplot(data=unempData, aes(x=Date))
 g2 <- g2 + geom_point(aes(y=UnemploymentRate, colour="Unemployment Rate"))
+g2 <- g2 +  scale_colour_brewer(palette="Set1")
 g2 <- g2 + theme(axis.text.x = element_text(angle=30, vjust=1))
 g2 <- g2 + guides(colour = guide_legend("Legend"))
 g2 <- g2 + labs(title="U.S. Unemployment Rate 2007 - 2012",
@@ -346,40 +316,270 @@ g2 <- g2 + labs(title="U.S. Unemployment Rate 2007 - 2012",
 g2
 ```
 
-```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate"}
+As shown in the unemployment rate chart, above, unemployment increased significantly during the
+time of the great recession during 2008 and 2009. Let's overlay unemployment (slightly transformed through multiplication and rooting) on our Births chart and see how things line up.
+
+```{r}
 modelRoot <- 3
-g1 <- g1 + geom_point(data=unempData, aes(y=UnemploymentRate^(1/modelRoot) * 100000 * 2, colour="Unemployment Rate"))
+nth.root <- function(y, root)
+{
+  return (y ^ (1/root))
+}
+```
+
+```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate"}
+g1 <- g1 + geom_point(data=unempData, aes(y=nth.root(UnemploymentRate, modelRoot) * 100000 * 2, colour="Unemployment Rate"))
 
 g1
 ```
 
+Its hard to judge if there is a good relationship between births and unemployment, but it seems like there might be. After playing around with various functional forms, the following form provided a reasonable outcome. 
+
+<center>
+  <math>
+    <mi>y</mi>
+    <mo>=</mo>
+    <msub><mi>B</mi><mn>0</mn></msub><mo>+</mo>
+    <msub><mi>B</mi><mn>1</mn></msub><mo>&InvisibleTimes;</mo><msub><mi>X</mi><mn>1</mn></msub><mo>+</mo>
+    <msub><mi>B</mi><mn>2</mn></msub><mo>&InvisibleTimes;</mo><mroot><msub><mi>X</mi><mn>1</mn></msub><mn>3</mn></mroot><mo>+</mo>
+    <msub><mi>B</mi><mn>3</mn></msub><mo>&InvisibleTimes;</mo><msub><mi>X</mi><mn>1</mn></msub><mo>&InvisibleTimes;</mo>
+      <mroot><msub><mi>X</mi><mn>1</mn></msub><mn>3</mn></mroot>
+  </math>
+</center>
+
+
+Let's examine the results when the above functional form is applied to the unemployment and birth data:
+
 ```{r}
-
-x.root <- function(y, root)
-{
-  return (y ^ (1/root))
-}
-
-fit2 <- lm(B.Births ~ U.UnemploymentRate*x.root(U.UnemploymentRate, modelRoot), data=tsData)
-print(summary(fit2))
+tsData <- ts.intersect(B=as.ts(birthsPerYearMth), U=as.ts(unempData))
+fit2 <- lm(B.Births ~ U.UnemploymentRate*nth.root(U.UnemploymentRate, modelRoot), data=tsData)
+model.summary <- summary(fit2)
+print(model.summary)
 ```
+
+From the R<sup>2</sup> shown in the model summary shown above, the model explains approximately `r sprintf("%.1f", model.summary$r.squared * 100)` % of the total variability in the Birth data. Graphically, we can see that the model follows the linear regressions fairly closely, though the model doesn't predict any seasonality.
 
 ```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate & Model"}
 g1 <- g1 + geom_point(data=unempData, aes(y=fit2$coefficients[1] + 
                                             (fit2$coefficients[2] * UnemploymentRate) + 
-                                            (fit2$coefficients[3] * x.root(UnemploymentRate, modelRoot)) +
-                                            (fit2$coefficients[4] * UnemploymentRate * x.root(UnemploymentRate, modelRoot)), colour="Model"))
+                                            (fit2$coefficients[3] * nth.root(UnemploymentRate, modelRoot)) +
+                                            (fit2$coefficients[4] * UnemploymentRate * nth.root(UnemploymentRate, 
+                                                                                                modelRoot)), 
+                                          colour="Model"))
 
 g1
 ```
 
-![Visualization of U.S. Births December 2009](C:\\Code\\R\\DataAcqMgmt\\FinalProject\\Charts\\2009_12_US_Births.png)
+### Next Steps
 
-### Source Code ###
+A couple of questions come to mind related to validation and improvement. How does this base model predict historical U.S. births given unemployment for the same period? Likewise, how can or should be integrate seasonality into the model? These questions and others are out of scope for this study but are natural extensions of this study and would add to the results presented herein.
+
+### Conclusions
+
+Though a validation using pre-2007 (or post-2012) Natality data was not performed, the model presented in this study provides a foundation for futher research into the relationship between unemployment rate and births in the United States. At a minimum, this study appears to confirm that the level of employment and by extension, economic activity, in the United States has an effect on birth in following months and years.
+
+### Source Code
+
 The raw R markdown code used to produce this study can be found 
-[on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/Week13/Project5-LoadingDataIntoNeo4j.Rmd).
+[on GitHub, in my DataAcqMgmt repository](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/FinalProject/FinalProject-Dittenhafer-USBirthsAnalysis.Rmd).
 
-### References ###
+### Appendix
+
+As part of the discovery process used to better understand the HHS Natality data, a geographic visualization was produced. Although the visualization didn't fit neatly into the birth/unemployment study, the transformations, code and an example visualization are included herein for the benefit of readers and future researchers.
+
+The `ggmap` package helps to visualize data geographically and the birth data comes complete with county identifiers. As such, shape data for United States counties was acquired from the U.S. Census Bureau `r citep(bibShapeFile)`. The following function downloads this shape data and initializes it for use by `ggmap` `r citep(bibGgmapPdf)`.
+
+```{r}
+#####
+# FUNCTION: loadShapeData 
+#
+loadShapeData <- function(fileNoExt)
+{
+  # Download the shape files from the cloud.
+  shpFile <- NA
+  shapeFileExts <- c(".shp", ".shx", ".dbf")
+  for(i in 1:length(shapeFileExts))
+  {
+    shpFileUrl <- sprintf("%s/%s%s", gitHubRoot, fileNoExt, shapeFileExts[i])
+    tmpFile <- sprintf("%s\\%s%s", tempdir(), fileNoExt, shapeFileExts[i])
+    
+    download.file(shpFileUrl, tmpFile, method="internal", mode="wb")
+    if(shapeFileExts[i] == ".shp") {
+      shpFile <- tmpFile
+    }
+  }
+  
+  # Read data into R 
+  shapefile <- readShapeSpatial(shpFile, 
+                                proj4string = CRS("+proj=longlat +datum=WGS84"), 
+                                IDvar="GEOID")
+  # Convert to a format ggmap likes
+  shapeData <- fortify(shapefile)
+
+  return (shapeData)
+}
+```
+
+The `geoVisual` helper function was developed to integrate the shape data with the individual county birth rate data.
+
+```{r}
+#####
+# FUNCTION: geoVisual 
+#
+#
+geoVisual <- function(shapeData, data, title, filename, saveLocation)
+{  
+  # integrate the birth data and create a percentage metric
+  shapeData <- join(shapeData, data, by='id')  
+  shapeData <- dplyr::mutate(shapeData, BirthsNormalized = BirthsPer1000Pop)
+  
+  if(TRUE) {
+  # Center the map over the United States
+  map <- get_map(location=c(-97.279404, 39.828127), zoom=4)
+  
+  gmap <- ggmap(map)
+  gmap <- gmap + scale_fill_gradientn(colours=rainbow(50, start=0.5),
+                                      limits=c(.5, 2),name="Births/1000",
+                                      guide=guide_colourbar(barwidth=0.5))
+
+  gmap <- gmap + geom_polygon(aes(x = long, y = lat, group = group, fill=BirthsNormalized), 
+                            data = shapeData, #, 
+                            colour = 'white', 
+                            alpha = .5,
+                            size = .1)
+  gmap <- gmap + xlab("Births per 1000 people by County based on 2010 Census")
+  gmap <- gmap + ylab("")
+  gmap <- gmap + theme(axis.ticks = element_blank(), 
+                       axis.text = element_blank(),
+                       axis.title = element_text(size=8),
+                       plot.title = element_text(size=10),
+                       legend.title = element_text(size=6))
+  gmap <- gmap + ggtitle(title)
+  
+  gmapft <- arrangeGrob(gmap, sub = textGrob("Created by Daniel Dittenhafer; Source: U.S. Health & Human Services", 
+                                           x = 0, hjust = -0.1, vjust=0.1, gp = gpar(fontface = "italic", fontsize = 6)))
+
+  plot(gmap)
+  
+  if(!is.na(saveLocation))
+  ggplot2::ggsave(sprintf("%s%s.png", saveLocation, filename), 
+                  plot=gmapft,
+                  width=5, height=4)
+  }
+}
+```
+
+In order to better visualize the Unidentified counties mentioned in the data set profile, the `fillinCounties` function was developed to distribute the "Unidentified Counties" births for a given state proportionally across those counties (after being reidentified).
+
+```{r}
+########
+# FUNCTION: fillinCounties
+#
+fillinCounties <- function(r, reident)
+{
+  counties <- subset(reident, reident$STNAME == r$State)
+  countyLen <- nrow(counties)
+
+  dfCountiesYearMonth <- data.frame( 
+        Notes=rep(NA, countyLen), 
+        Year=rep(r$Year, countyLen),
+        Year.Code=rep(r$Year.Code, countyLen),
+        Month=rep(r$Month, countyLen),
+        Month.Code=rep(r$Month.Code, countyLen),
+        State=rep(r$State, countyLen),
+        State.Code=rep(r$State.Code, countyLen),
+        County=paste(counties$CTYNAME, ", ", counties$STNAME, sep=""),
+        County.Code=counties$County.Code,
+        Births=r$Births * (as.numeric(counties$CENSUS2010POP) / sum(as.numeric(counties$CENSUS2010POP))),
+        Date=rep(lubridate::parse_date_time(sprintf("%s-%s-01", 
+                                                    r$Year.Code, 
+                                                    r$Year.Code), 
+                                            orders="ymd"), countyLen)        
+        )
+  
+  return (dfCountiesYearMonth)
+}
+```
+
+The following code block is the driver code for the geographic visualization. It performs the following key operations:
+
+* Extract county census data from the raw census data set (County "000" is the state level aggregate population).
+* Select out the "Unidentified Counties" rows from the Natality data.
+* Identify the "Unidentified Counties" using a "not in" clause.
+* Apply the `fillinCounties' function to the "Unidentified Counties" data subset using the newly identified counties.
+* Bind the results from ddply to the origin birth data.
+* Normalize all the birth data using the census data.
+* Select just the data needed for the visualization and update the `County.Code` column name to match the fortified shape data column `id`.
+* Finally, loop through the years and months to render the visualization as needed.
+
+```{r, warning=FALSE, message=FALSE, fig.cap="Geographic Visualization of U.S. Births December 2009"}
+if(TRUE) {
+  # Load the shape data
+  shapes <- loadShapeData("cb_2013_us_county_20m")
+  
+  # Pull out just what we need of the census data
+  censusCtyPop2010 <- subset(censusData, 
+                             censusData$COUNTY != "000", 
+                             select=c("County.Code", 
+                                      "STNAME", 
+                                      "CTYNAME", 
+                                      "CENSUS2010POP", 
+                                      "CENSUS2010POPHundreds", 
+                                      "CENSUS2010POPThousands"))  
+   
+  # What are the unidentified counties? 
+  unidentCounties <- subset(birthDataWoNa, 
+                            stringr::str_detect(birthDataWoNa$County, "^Unidentified Counties,"))
+  #print(head(unidentCounties))
+  
+  reidentCounties <- subset(censusCtyPop2010, 
+                            !(County.Code %in% birthDataWoNa$County.Code) ) 
+                             
+  #print(head(reidentCounties, 100))
+  
+  # Attempt to divy up the Unidentified Counties across the rest of the state.
+  unidentCountyAvg <- ddply(unidentCounties, 
+                            .variables=c("County.Code", "Year.Code", "Month.Code"), 
+                            .fun=fillinCounties, reidentCounties)
+  birthDataWoNa <- rbind(birthDataWoNa, unidentCountyAvg)
+  
+  # Normalize to births per 1000 population
+  #print(head(censusCtyPop2010))
+  birthDataWoNa <- join(birthDataWoNa, censusCtyPop2010, by="County.Code")
+  birthDataWoNa <- mutate(birthDataWoNa, BirthsPer100Pop=Births / CENSUS2010POPHundreds)  
+  birthDataWoNa <- mutate(birthDataWoNa, BirthsPer1000Pop=Births / CENSUS2010POPThousands)  
+  
+  # select out the id and births columns
+  subCountyBirth <- subset(birthDataWoNa, select=c('Year', 
+                                                   'Month', 
+                                                   'County.Code', 
+                                                   'BirthsPer100Pop', 
+                                                   'BirthsPer1000Pop'))
+  subCountyBirth <- rename(subCountyBirth, c('County.Code'='id'))  
+  
+  years <- c(2009) # 2007, 2008, 2009, 2010, 2011, 2012
+  months <- c("January", "February", "March", "April", "May", 
+              "June", "July", "August", "September", "October", 
+              "November", "December")
+  for(year in years){
+    for (m in seq(12, 12, by=1) ) { # 
+      month = months[m]
+      birthsYrMonth <- subset(subCountyBirth, subCountyBirth$Year == year & subCountyBirth$Month == month)
+      
+      title <- sprintf("Continental U.S. Births - %s, %d", month, year)
+      filename <- sprintf("%d_%00d_US_Births", year, m)
+      
+      geoVisual(shapes, birthsYrMonth, title, filename, NA)
+    }
+  }
+}
+```
+
+The final result is a map of the United States with the county-level birth data overlaid as shown above.
+
+An animated version of the above visualization produced using the Gifmaker.me website can be found [on GitHub, in my DataAcqMgmt repository, here](https://raw.githubusercontent.com/dwdii/DataAcqMgmt/master/FinalProject/USBirthsGeographicAnimation.gif) `r citep(bibAniGif)`.
+
+### References
 
 ```{r, results='asis', echo=FALSE}
 BibOptions(style="html", bib.style="authortitle")
