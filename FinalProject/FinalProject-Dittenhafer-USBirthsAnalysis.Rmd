@@ -131,7 +131,7 @@ library(gridExtra)
 library(reshape2)
 ```
 
-The data sests used throughout this study are hosted in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub uses SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in.
+The data sets used throughout this study are hosted in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub uses SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in.
 
 ```{r}
 gitHubRoot <- "https://github.com/dwdii/DataAcqMgmt/raw/master/FinalProject/Data"
@@ -175,13 +175,14 @@ loadShapeData <- function(fileNoExt)
 ```
 
 HHS provides various data sets related to natality, though the most recent year
-available is 2012. The 6 year period from 2007 - 2012 was downloaded and posted 
+available is 2012. Given our interest in the period including the 2008 recession,
+the 6 year period from 2007 - 2012 was downloaded and posted 
 to GitHub for this study. The data is tab delimited and although many values 
 are integer in nature (State Code and County Code for example), they are better
 loaded as character data to preserve '0' padding. HHS includes data set notes 
 which result in `NA` values in the Births data column. These NA values were 
 removed. Also the `Year.Code` and `Month.Code` are combined to give a single 
-`Date` column for use in aggregations later.
+`Date` column for use in aggregations later. 
 
 ```{r}
 #####
@@ -277,16 +278,17 @@ loadUnemploymentData <- function()
 }
 ```
 
-The data is first loaded into data.frames from the hosted locations.
+### Data Analysis
+
+Using the functions defined above, let's bring the natality, census and shape data into our session.
+
 ```{r}
 birthDataWoNa <- loadBirthData()
-#censusData <- loadCensusData()
-#shapes <- loadShapeData("cb_2013_us_county_20m")
-
-#print(summary(shapes))
+censusData <- loadCensusData()
+shapes <- loadShapeData("cb_2013_us_county_20m")
 ```
 
-Lets look at how many births occurred each month by aggregating the birth data by date. The `Date` column in this case is at a month granularity as a result of the transformation applied in the `loadBirthData` function.
+We can determine how many births occurred each month by aggregating the birth data by date. The `Date` column in this case is at a month granularity as a result of the transformation applied in the `loadBirthData` function.
 
 ```{r}
 birthsPerYearMth <- aggregate(Births ~  Date, birthDataWoNa, sum)
@@ -295,18 +297,16 @@ birthsPerYearMth <- birthsPerYearMth[order(birthsPerYearMth$Date), ]
 
 ```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012"}
 g1 <- ggplot(data=birthsPerYearMth, aes(x=Date))
-g1 <- g1 + geom_point(aes(y=Births, colour="Births"))
-#g1 <- g1 + scale_fill_hue(l=40)
+g1 <- g1 + geom_line(aes(y=Births, colour="Births"))
 g1 <- g1 + theme(axis.text.x = element_text(angle=30, vjust=1))
 g1 <- g1 + guides(colour = guide_legend("Legend"))
 g1 <- g1 + labs(title="United States Births 2007 - 2012",
                 x="Time",
                 y="Births")
 g1
-
 ```
 
-It looks like there is a downward trend. Lets run a linear regression and overlay that.
+Besides the apparent seasonality to the birth data, it looks like there is a downward trend and possibly a trough during 2010. Lets run a linear regression and overlay that.
 
 ```{r}
 fit <- lm(Births ~ Date, data=birthsPerYearMth)
@@ -316,9 +316,13 @@ fit <- lm(Births ~ Date, data=birthsPerYearMth)
 g1 <- g1 + geom_abline(aes(colour="Linear"), 
                        intercept=fit$coefficients[1], 
                        slope=fit$coefficients[2])
+g1 <- g1 + geom_smooth(data=subset(birthsPerYearMth, lubridate::year(Date) < 2011), 
+                       aes(colour="Linear < 2011", y=Births), method="lm")
+g1 <- g1 + geom_smooth(data=subset(birthsPerYearMth, lubridate::year(Date) >= 2010), 
+                       aes(colour="Linear >= 2010", y=Births), method="lm")
 g1 <- g1 + annotate("Text", label=sprintf("y=%.2f + %fX", fit$coefficients[1], fit$coefficients[2]),
-                    yend=max(birthsPerYearMth$Births), 
-                    xend=lubridate::parse_date_time("2012-12-01", "ymd"),
+                    y=max(birthsPerYearMth$Births), 
+                    x=lubridate::parse_date_time("2010-12-01", "ymd"),
                     size=3)
 g1
 ```
@@ -369,7 +373,7 @@ g1 <- g1 + geom_point(data=unempData, aes(y=fit2$coefficients[1] +
 g1
 ```
 
-![Visualization of U.S. Births December 2009](C:\\Code\\R\\DataAcqMgmt\\FinalProject\\Charts\\2009_December_US_Births.png)
+![Visualization of U.S. Births December 2009](C:\\Code\\R\\DataAcqMgmt\\FinalProject\\Charts\\2009_12_US_Births.png)
 
 ### Source Code ###
 The raw R markdown code used to produce this study can be found 

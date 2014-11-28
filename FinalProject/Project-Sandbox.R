@@ -40,7 +40,7 @@ geoVisual <- function(shapeData, data, title, filename)
   # integrate the birth data and create a percentage metric
   shapeData <- join(shapeData, data, by='id')  
   #shapeData <- dplyr::mutate(shapeData, birthPercent = Births / sum(Births, na.rm=TRUE))
-  shapeData <- dplyr::mutate(shapeData, BirthsNormalized = BirthsPer100Pop)
+  shapeData <- dplyr::mutate(shapeData, BirthsNormalized = BirthsPer1000Pop)
   
   #print(summary(shapeData))
   #print(head(subset(shapeData, is.na(Births)), 100))
@@ -51,15 +51,15 @@ geoVisual <- function(shapeData, data, title, filename)
   
   gmap <- ggmap(map)
   gmap <- gmap + scale_fill_gradientn(colours=rainbow(50, start=0.5),
-                                      limits=c(0, 8),name="Births/100",
+                                      limits=c(.5, 2),name="Births/1000",
                                       guide=guide_colourbar(barwidth=0.5))
 
   gmap <- gmap + geom_polygon(aes(x = long, y = lat, group = group, fill=BirthsNormalized), 
                             data = shapeData, #, 
                             colour = 'white', 
                             alpha = .5,
-                            size = .2)
-  gmap <- gmap + xlab("Births per 100 people by County based on 2010 Census")
+                            size = .1)
+  gmap <- gmap + xlab("Births per 1000 people by County based on 2010 Census")
   gmap <- gmap + ylab("")
   gmap <- gmap + theme(axis.ticks = element_blank(), 
                        axis.text = element_blank(),
@@ -68,20 +68,13 @@ geoVisual <- function(shapeData, data, title, filename)
                        legend.title = element_text(size=6))
   gmap <- gmap + ggtitle(title)
   
-#   gmap <- gmap + geom_polygon(aes(x = long, y = lat, group = group), 
-#                             data = shapeData, #, 
-#                             colour = 'white', 
-#                             fill = 'black',
-#                             alpha = .4,
-#                             size = .3
-#                           )  
-
-
   gmapft <- arrangeGrob(gmap, sub = textGrob("Created by Daniel Dittenhafer; Source: U.S. Health & Human Services", 
                                            x = 0, hjust = -0.1, vjust=0.1, gp = gpar(fontface = "italic", fontsize = 6)))
   #gmapft <- gmap
   plot(gmap)
-  ggplot2::ggsave(sprintf("%s%s.png", chartFileOutputFolder, filename), plot=gmapft)
+  ggplot2::ggsave(sprintf("%s%s.png", chartFileOutputFolder, filename), 
+                  plot=gmapft,
+                  width=5, height=4)
   }
 }
 
@@ -206,7 +199,7 @@ fillinCounties <- function(r, reident)
         State.Code=rep(r$State.Code, countyLen),
         County=paste(counties$CTYNAME, ", ", counties$STNAME, sep=""),
         County.Code=counties$County.Code,
-        Births=rep(r$Births / countyLen, countyLen)
+        Births=r$Births * (as.numeric(counties$CENSUS2010POP) / sum(as.numeric(counties$CENSUS2010POP)))
         #,STNAME=rep(r$State, countyLen)
         #,CTYNAME=counties$CTYNAME
         )
@@ -238,7 +231,12 @@ if(TRUE) {
   # Pull out just what we need of the census data
   censusCtyPop2010 <- subset(censusData, 
                              censusData$COUNTY != "000", 
-                             select=c("County.Code", "STNAME", "CTYNAME", "CENSUS2010POPHundreds"))  
+                             select=c("County.Code", 
+                                      "STNAME", 
+                                      "CTYNAME", 
+                                      "CENSUS2010POP", 
+                                      "CENSUS2010POPHundreds", 
+                                      "CENSUS2010POPThousands"))  
    
   # What are the unidentified counties? 
   unidentCounties <- subset(birthDataWoNa, stringr::str_detect(birthDataWoNa$County, "^Unidentified Counties,"))
@@ -257,21 +255,23 @@ if(TRUE) {
   print(head(censusCtyPop2010))
   birthDataWoNa <- join(birthDataWoNa, censusCtyPop2010, by="County.Code")
   birthDataWoNa <- mutate(birthDataWoNa, BirthsPer100Pop=Births / CENSUS2010POPHundreds)  
+  birthDataWoNa <- mutate(birthDataWoNa, BirthsPer1000Pop=Births / CENSUS2010POPThousands)  
   
   # select out the id and births columns
-  subCountyBirth <- subset(birthDataWoNa, select=c('Year', 'Month', 'County.Code', 'BirthsPer100Pop'))
+  subCountyBirth <- subset(birthDataWoNa, select=c('Year', 'Month', 'County.Code', 'BirthsPer100Pop', 'BirthsPer1000Pop'))
   subCountyBirth <- rename(subCountyBirth, c('County.Code'='id'))  
   
   years <- c(2007, 2008, 2009, 2010, 2011, 2012)
   months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
   for(year in years){
-    for (month in months ) { # seq(1, 12, by=1)
+    for (m in seq(1, 1, by=1) ) { # 
+    month = months[m]
     birthsYrMonth <- subset(subCountyBirth, subCountyBirth$Year == year & subCountyBirth$Month == month)
     
-    #print(summary(birthsYrMonth))
+    print(summary(birthsYrMonth, 100))
     
     title <- sprintf("Continental U.S. Births - %s, %d", month, year)
-    filename <- sprintf("%d_%s_US_Births", year, month)
+    filename <- sprintf("%d_%00d_US_Births", year, m)
   
     print(title)
     print(filename)
