@@ -264,7 +264,7 @@ if(TRUE) {
   years <- c(2007, 2008, 2009, 2010, 2011, 2012)
   months <- c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
   for(year in years){
-    for (m in seq(1, 1, by=1) ) { # 
+    for (m in seq(1, 12, by=1) ) { # 
     month = months[m]
     birthsYrMonth <- subset(subCountyBirth, subCountyBirth$Year == year & subCountyBirth$Month == month)
     

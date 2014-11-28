@@ -327,7 +327,7 @@ g1 <- g1 + annotate("Text", label=sprintf("y=%.2f + %fX", fit$coefficients[1], f
 g1
 ```
 
-Definitely a negative trend overall, but not a drastic one... the slope is only `r sprintf("%f", fit$coefficients[2])`.  Ok, lets bring unemployment data in the picture during this same time frame.
+Definitely a negative trend overall, but not a drastic one... the slope is only `r sprintf("%f", fit$coefficients[2])`.  And notice that when we differentiate pre-2011 versus 2010 onward, the sign of the slope flips. After 2010, there is a definite rise in births. Ok, lets bring unemployment data in the picture during this same time frame.
 
 ```{r}
 unempData <- loadUnemploymentData()
