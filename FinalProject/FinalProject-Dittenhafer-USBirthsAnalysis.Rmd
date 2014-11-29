@@ -3,9 +3,9 @@ title: "U.S. Births & Unemployment Rate 2007 - 2012"
 author: "Daniel Dittenhafer"
 date: "Monday, December 1, 2014"
 output:
+  html_document: default
   pdf_document:
     latex_engine: xelatex
-  html_document: default
 ---
 ```{r, echo=FALSE}
 options(warn=-1)
@@ -285,7 +285,7 @@ birthsPerYearMth <- aggregate(Births ~  Date, birthDataWoNa, sum)
 birthsPerYearMth <- birthsPerYearMth[order(birthsPerYearMth$Date), ]
 ```
 
-```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012"}
+```{r births_raw, echo=FALSE, fig.cap="U.S. Births 2007-2012", fig.path='figure/'}
 g1 <- ggplot(data=birthsPerYearMth, aes(x=Date))
 g1 <- g1 + geom_line(aes(y=Births, colour="Births"))
 g1 <- g1 + theme(axis.text.x = element_text(angle=30, vjust=1))
@@ -302,7 +302,7 @@ Besides the apparent seasonality to the birth data (with peaks in late summer/ea
 fit <- lm(Births ~ Date, data=birthsPerYearMth)
 ```
 
-```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression"}
+```{r births_lm, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression", fig.path='figure/'}
 g1 <- g1 + geom_abline(aes(colour="Linear"), 
                        intercept=fit$coefficients[1], 
                        slope=fit$coefficients[2])
@@ -325,7 +325,7 @@ Ok, lets bring unemployment data for this same time frame in the picture.
 unempData <- loadUnemploymentData()
 ```
 
-```{r, echo=FALSE, fig.cap="U.S. Unemployment Rate 2007 - 2012"}
+```{r unemployment_raw, echo=FALSE, fig.cap="U.S. Unemployment Rate 2007 - 2012", fig.path='figure/'}
 g2 <- ggplot(data=unempData, aes(x=Date))
 g2 <- g2 + geom_point(aes(y=UnemploymentRate, colour="Unemployment Rate"))
 g2 <- g2 +  scale_colour_brewer(palette="Set1")
@@ -348,7 +348,7 @@ nth.root <- function(y, root)
 }
 ```
 
-```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate"}
+```{r births_w_unemp, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate", fig.path='figure/'}
 g1 <- g1 + geom_point(data=unempData, aes(y=nth.root(UnemploymentRate, modelRoot) * 100000 * 2, colour="Unemployment Rate"))
 
 g1
@@ -377,7 +377,7 @@ From the R-squared included in the model summary shown above, the model explains
 
 $$ y = `r sprintf("%.2f", fit2$coefficients[1])` + `r sprintf("%.2f", fit2$coefficients[2])` X_1 + `r sprintf("%.2f", fit2$coefficients[3])` \sqrt[3]{X_1} + `r sprintf("%.2f", fit2$coefficients[4])` X_1 \sqrt[3]{X_1} $$
 
-```{r, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate & Model"}
+```{r births_w_model, echo=FALSE, fig.cap="U.S. Births 2007-2012 with Linear Regression & UnemploymentRate & Model", fig.path='figure/'}
 g1 <- g1 + geom_point(data=unempData, aes(y=fit2$coefficients[1] + 
                                             (fit2$coefficients[2] * UnemploymentRate) + 
                                             (fit2$coefficients[3] * nth.root(UnemploymentRate, modelRoot)) +
