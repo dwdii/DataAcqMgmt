@@ -3,14 +3,24 @@ title: "U.S. Births & Unemployment Rate 2007 - 2012"
 author: "Daniel Dittenhafer"
 date: "Monday, December 1, 2014"
 output:
-  html_document: default
   pdf_document:
     latex_engine: xelatex
+  html_document: default
 ---
 ```{r, echo=FALSE}
 options(warn=-1)
-require(knitcitations, quietly=TRUE)
-require(RefManageR, quietly=TRUE)
+repo <- "http://cran.us.r-project.org"
+require.package <- function (package)
+{
+  if(!require(package, quietly=TRUE, character.only=TRUE))
+  {
+    install.packages(package, repos=repo) 
+    library(package, character.only=TRUE)
+  }
+}
+
+require.package("knitcitations")
+require.package("RefManageR")
 
 cleanbib()
 
@@ -141,14 +151,14 @@ At a high level, the methodology employed in this study follows Hadley Wickham's
 The [R language](http://www.r-project.org/) was used to perform the data analysis presented in this study. As such, the following R packages are used throughout the code to enable various data loading, transformation and visualization aspects of the study.
 
 ```{r, warning=FALSE, message=FALSE}
-library(ggplot2)
-library(ggmap)
-library(plyr)
-library(sp)
-library(maptools)
-library(grid)
-library(gridExtra)
-library(reshape2)
+require.package("ggplot2")
+require.package("plyr")
+require.package("reshape2")
+require.package("ggmap")
+require.package("sp")
+require.package("maptools")
+require.package("grid")
+require.package("gridExtra")
 ```
 
 The data sets used throughout this study are hosted in [my DataAcqMgmt repository on GitHub](https://github.com/dwdii/DataAcqMgmt/tree/master/FinalProject/Data) to enable a more reproducible research experience. Since GitHub uses SSL, `setInternet2` will help Windows users if they choose to reproduce the results presented here in. If you choose to reproduce this study using the original R Markdown, please ensure you have a reliable high-speed internet connection before proceeding.
